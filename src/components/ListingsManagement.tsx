@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ExternalLink, RotateCcw, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,6 +26,7 @@ export interface Listing {
 
 export const ListingsManagement = () => {
   const { toast } = useToast();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   // Mock data for demonstration
   const [listings] = useState<Listing[]>([
@@ -86,10 +88,7 @@ export const ListingsManagement = () => {
   };
 
   const handleAddListing = () => {
-    toast({
-      title: "Add Listing",
-      description: "Listing creation form will open here.",
-    });
+    setIsAddDialogOpen(true);
   };
 
   const getStatusBadge = (status: Listing['status']) => {
@@ -164,10 +163,31 @@ export const ListingsManagement = () => {
             <RotateCcw className="w-4 h-4 mr-2" />
             Sync All
           </Button>
-          <Button onClick={handleAddListing}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Listing
-          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={handleAddListing}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Listing
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Listing</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-muted-foreground">
+                  This is a placeholder for the add listing form. Here you would configure:
+                </p>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
+                  <li>Listing title and description</li>
+                  <li>Select fragrance SKU</li>
+                  <li>Choose platform (Etsy/WooCommerce)</li>
+                  <li>Set pricing and variations</li>
+                  <li>Upload images</li>
+                </ul>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
