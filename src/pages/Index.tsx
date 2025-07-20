@@ -2,6 +2,8 @@ import { useState } from "react";
 import { InventoryDashboard } from "@/components/InventoryDashboard";
 import { InventoryTable, FragranceItem } from "@/components/InventoryTable";
 import { FragranceForm } from "@/components/FragranceForm";
+import { ListingsManagement } from "@/components/ListingsManagement";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -156,18 +158,31 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 space-y-8">
-        <InventoryDashboard 
-          stats={dashboardStats}
-          onAddFragrance={handleAddFragrance}
-          onSyncNow={handleSyncNow}
-        />
-        
-        <InventoryTable 
-          items={inventory}
-          onEditItem={handleEditItem}
-          onUpdateStock={handleUpdateStock}
-        />
+      <div className="container mx-auto p-6">
+        <Tabs defaultValue="inventory" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="inventory">Inventory Management</TabsTrigger>
+            <TabsTrigger value="listings">Listings Management</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="inventory" className="space-y-8">
+            <InventoryDashboard 
+              stats={dashboardStats}
+              onAddFragrance={handleAddFragrance}
+              onSyncNow={handleSyncNow}
+            />
+            
+            <InventoryTable 
+              items={inventory}
+              onEditItem={handleEditItem}
+              onUpdateStock={handleUpdateStock}
+            />
+          </TabsContent>
+          
+          <TabsContent value="listings">
+            <ListingsManagement />
+          </TabsContent>
+        </Tabs>
 
         <FragranceForm
           isOpen={isFormOpen}
