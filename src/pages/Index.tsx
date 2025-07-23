@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Header } from "@/components/Header";
 import { InventoryDashboard } from "@/components/InventoryDashboard";
 import { InventoryTable, FragranceItem } from "@/components/InventoryTable";
 import { FragranceForm } from "@/components/FragranceForm";
@@ -111,6 +112,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <div className="container mx-auto p-6">
         <Tabs defaultValue="inventory" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
