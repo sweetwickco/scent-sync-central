@@ -5,6 +5,7 @@ import { InventoryDashboard } from "@/components/InventoryDashboard";
 import { InventoryTable, FragranceItem } from "@/components/InventoryTable";
 import { FragranceForm } from "@/components/FragranceForm";
 import { ListingsManagement } from "@/components/ListingsManagement";
+import { DesignIdeas } from "@/components/DesignIdeas";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
@@ -129,9 +130,10 @@ const Index = () => {
       <Header />
       <div className="container mx-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="inventory">Inventory Management</TabsTrigger>
             <TabsTrigger value="listings">Listings Management</TabsTrigger>
+            <TabsTrigger value="design-ideas">Design Ideas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="inventory" className="space-y-8">
@@ -150,6 +152,10 @@ const Index = () => {
           
           <TabsContent value="listings">
             <ListingsManagement fragrances={inventory} />
+          </TabsContent>
+          
+          <TabsContent value="design-ideas">
+            <DesignIdeas />
           </TabsContent>
         </Tabs>
 
