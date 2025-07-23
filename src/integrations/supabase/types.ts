@@ -50,6 +50,48 @@ export type Database = {
         }
         Relationships: []
       }
+      etsy_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          refresh_token: string | null
+          shop_id: string
+          shop_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          shop_id: string
+          shop_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          shop_id?: string
+          shop_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fragrances: {
         Row: {
           cost: number | null
@@ -146,6 +188,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          etsy_listing_id: string | null
           external_id: string | null
           fragrance_id: string
           id: string
@@ -153,6 +196,7 @@ export type Database = {
           platform_id: string
           price: number
           quantity: number
+          shop_section_id: string | null
           status: Database["public"]["Enums"]["listing_status"]
           title: string
           updated_at: string
@@ -161,6 +205,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          etsy_listing_id?: string | null
           external_id?: string | null
           fragrance_id: string
           id?: string
@@ -168,6 +213,7 @@ export type Database = {
           platform_id: string
           price: number
           quantity?: number
+          shop_section_id?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
           title: string
           updated_at?: string
@@ -176,6 +222,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          etsy_listing_id?: string | null
           external_id?: string | null
           fragrance_id?: string
           id?: string
@@ -183,6 +230,7 @@ export type Database = {
           platform_id?: string
           price?: number
           quantity?: number
+          shop_section_id?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
           title?: string
           updated_at?: string
