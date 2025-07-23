@@ -15,9 +15,9 @@ serve(async (req) => {
   }
 
   try {
-    const { formData, context } = await req.json();
+    const { formData, context, customPrompt } = await req.json();
 
-    const prompt = `You are a business planning expert for a ${context || 'small business'}. 
+    const prompt = customPrompt || `You are a business planning expert for a ${context || 'small business'}. 
 
 Based on the following information, create a detailed, actionable business plan broken down into specific tasks:
 

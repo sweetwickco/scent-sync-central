@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import { Plus, CheckCircle, Clock, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { NewPlanPage } from "./NewPlanPage";
 
 interface Plan {
   id: string;
@@ -48,26 +46,26 @@ export const Planning = () => {
   const [todoTasks, setTodoTasks] = useState<TodoTask[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [planTasks, setPlanTasks] = useState<PlanTask[]>([]);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [modalStep, setModalStep] = useState<'form' | 'generating' | 'results'>('form');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedTasks, setGeneratedTasks] = useState<any[]>([]);
-  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<number>>(new Set());
-
-  // Form state
-  const [formData, setFormData] = useState({
-    title: '',
-    goal: '',
-    timeline: '',
-    budget: '',
-    target_audience: '',
-    description: ''
-  });
+  const [showNewPlanPage, setShowNewPlanPage] = useState(false);
 
   useEffect(() => {
-    fetchPlans();
-    fetchTodoTasks();
-  }, []);
+    if (!showNewPlanPage) {
+      fetchPlans();
+      fetchTodoTasks();
+    }
+  }, [showNewPlanPage]);
+
+  if (showNewPlanPage) {
+    return (
+      <NewPlanPage 
+        onBack={() => {
+          setShowNewPlanPage(false);
+          fetchPlans();
+          fetchTodoTasks();
+        }} 
+      />
+    );
+  }
 
   const fetchPlans = async () => {
     const { data, error } = await supabase
@@ -121,123 +119,6 @@ export const Planning = () => {
     }
   };
 
-  const generatePlan = async () => {
-    setIsGenerating(true);
-    setModalStep('generating');
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-business-plan', {
-        body: { 
-          formData,
-          context: 'fragrance business planning'
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      setGeneratedTasks(data.tasks || []);
-      setSelectedTaskIds(new Set(data.tasks?.map((_: any, index: number) => index) || [])); 
-      setModalStep('results');
-    } catch (error) {
-      toast({
-        title: "Error generating plan",
-        description: "Failed to generate AI plan. Please try again.",
-        variant: "destructive",
-      });
-      setModalStep('form');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const savePlan = async () => {
-    const { data: planData, error: planError } = await supabase
-      .from('plans')
-      .insert({
-        title: formData.title,
-        description: formData.description,
-        fields_data: formData,
-        ai_generated_plan: generatedTasks,
-        status: 'draft',
-        user_id: user?.id!
-      })
-      .select()
-      .single();
-
-    if (planError) {
-      toast({
-        title: "Error saving plan",
-        description: planError.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Save selected tasks
-    const tasksToAdd = Array.from(selectedTaskIds).map(index => {
-      const task = generatedTasks[index];
-      return {
-        plan_id: planData.id,
-        title: task.title,
-        description: task.description,
-        order_index: index,
-        completed: false
-      };
-    });
-
-    if (tasksToAdd.length > 0) {
-      const { error: tasksError } = await supabase
-        .from('plan_tasks')
-        .insert(tasksToAdd);
-
-      if (tasksError) {
-        toast({
-          title: "Error saving tasks",
-          description: tasksError.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Add selected tasks to todo list
-      const todoTasksToAdd = tasksToAdd.map(task => ({
-        title: task.title,
-        description: task.description,
-        completed: false,
-        user_id: user?.id!
-      }));
-
-      await supabase
-        .from('todo_tasks')
-        .insert(todoTasksToAdd);
-    }
-
-    toast({
-      title: "Plan created successfully",
-      description: `${formData.title} has been saved with ${tasksToAdd.length} tasks.`,
-    });
-
-    setIsCreateDialogOpen(false);
-    resetForm();
-    fetchPlans();
-    fetchTodoTasks();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      goal: '',
-      timeline: '',
-      budget: '',
-      target_audience: '',
-      description: ''
-    });
-    setGeneratedTasks([]);
-    setSelectedTaskIds(new Set());
-    setModalStep('form');
-  };
 
   const toggleTask = async (taskId: string, completed: boolean) => {
     const { error } = await supabase
@@ -268,172 +149,10 @@ export const Planning = () => {
           <h2 className="text-3xl font-bold tracking-tight">Business Planning</h2>
           <p className="text-muted-foreground">Plan new initiatives with AI-powered insights</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Plan
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Business Plan</DialogTitle>
-              <DialogDescription>
-                {modalStep === 'form' && "Fill out the details below and AI will generate a detailed action plan for you."}
-                {modalStep === 'generating' && "AI is generating your personalized business plan..."}
-                {modalStep === 'results' && "Review your generated plan and select tasks to add to your todo list."}
-              </DialogDescription>
-            </DialogHeader>
-            
-            {modalStep === 'form' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="title">Plan Title</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="e.g., Launch New Candle Collection"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="goal">Main Goal</Label>
-                    <Input
-                      id="goal"
-                      value={formData.goal}
-                      onChange={(e) => setFormData(prev => ({ ...prev, goal: e.target.value }))}
-                      placeholder="e.g., Increase revenue by 25%"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="timeline">Timeline</Label>
-                    <Input
-                      id="timeline"
-                      value={formData.timeline}
-                      onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
-                      placeholder="e.g., 3 months"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="budget">Budget</Label>
-                    <Input
-                      id="budget"
-                      value={formData.budget}
-                      onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                      placeholder="e.g., $5,000"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="target_audience">Target Audience</Label>
-                  <Input
-                    id="target_audience"
-                    value={formData.target_audience}
-                    onChange={(e) => setFormData(prev => ({ ...prev, target_audience: e.target.value }))}
-                    placeholder="e.g., Young professionals aged 25-35"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Detailed Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe your plan in detail, what you want to accomplish, challenges you expect, etc."
-                    rows={4}
-                  />
-                </div>
-                
-                <Button 
-                  onClick={generatePlan} 
-                  disabled={isGenerating || !formData.title || !formData.description}
-                  className="w-full"
-                >
-                  Generate AI Plan
-                </Button>
-              </div>
-            )}
-
-            {modalStep === 'generating' && (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                <div className="w-full max-w-xs bg-secondary rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-                </div>
-                <p className="text-center text-muted-foreground">
-                  Creating your personalized action plan...
-                </p>
-              </div>
-            )}
-
-            {modalStep === 'results' && (
-              <div className="space-y-6">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold">Plan Summary</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setModalStep('form')}>
-                      Edit & Rerun
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>Title:</strong> {formData.title}</div>
-                    <div><strong>Goal:</strong> {formData.goal}</div>
-                    <div><strong>Timeline:</strong> {formData.timeline}</div>
-                    <div><strong>Budget:</strong> {formData.budget}</div>
-                    <div className="col-span-2"><strong>Target:</strong> {formData.target_audience}</div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-3">Generated Action Plan</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Select the tasks you want to add to your todo list:
-                  </p>
-                  
-                  <ScrollArea className="max-h-60">
-                    <div className="space-y-2">
-                      {generatedTasks.map((task, index) => (
-                        <div key={index} className="flex items-start space-x-2 p-2 border rounded">
-                          <Checkbox
-                            checked={selectedTaskIds.has(index)}
-                            onCheckedChange={(checked) => {
-                              const newSelectedIds = new Set(selectedTaskIds);
-                              if (checked) {
-                                newSelectedIds.add(index);
-                              } else {
-                                newSelectedIds.delete(index);
-                              }
-                              setSelectedTaskIds(newSelectedIds);
-                            }}
-                          />
-                          <div className="flex-1">
-                            <h5 className="font-medium text-sm">{task.title}</h5>
-                            <p className="text-xs text-muted-foreground">{task.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                  
-                  <div className="flex gap-2 mt-4">
-                    <Button variant="outline" onClick={generatePlan} disabled={isGenerating}>
-                      {isGenerating ? "Regenerating..." : "Regenerate Plan"}
-                    </Button>
-                    <Button onClick={savePlan} className="flex-1">
-                      Save Plan & Add {selectedTaskIds.size} Tasks to Todo
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setShowNewPlanPage(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Plan
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
