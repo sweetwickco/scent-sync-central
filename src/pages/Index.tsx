@@ -11,64 +11,8 @@ const Index = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FragranceItem | null>(null);
   
-  // Mock data for demonstration
-  const [inventory, setInventory] = useState<FragranceItem[]>([
-    {
-      id: '1',
-      sku: 'VAN-001',
-      name: 'Vanilla Bean',
-      currentStock: 8,
-      lowStockThreshold: 3,
-      etsyListings: 3,
-      wooListings: 2,
-      lastUpdated: '2 hours ago',
-      status: 'in-stock',
-    },
-    {
-      id: '2',
-      sku: 'LAV-002',
-      name: 'French Lavender',
-      currentStock: 2,
-      lowStockThreshold: 3,
-      etsyListings: 2,
-      wooListings: 1,
-      lastUpdated: '1 hour ago',
-      status: 'low-stock',
-    },
-    {
-      id: '3',
-      sku: 'SAN-003',
-      name: 'Sandalwood Musk',
-      currentStock: 0,
-      lowStockThreshold: 3,
-      etsyListings: 4,
-      wooListings: 2,
-      lastUpdated: '30 mins ago',
-      status: 'out-of-stock',
-    },
-    {
-      id: '4',
-      sku: 'CIT-004',
-      name: 'Citrus Burst',
-      currentStock: 12,
-      lowStockThreshold: 5,
-      etsyListings: 1,
-      wooListings: 3,
-      lastUpdated: '45 mins ago',
-      status: 'in-stock',
-    },
-    {
-      id: '5',
-      sku: 'PIN-005',
-      name: 'Pine Forest',
-      currentStock: 4,
-      lowStockThreshold: 3,
-      etsyListings: 2,
-      wooListings: 1,
-      lastUpdated: '3 hours ago',
-      status: 'in-stock',
-    },
-  ]);
+  // Empty inventory initially
+  const [inventory, setInventory] = useState<FragranceItem[]>([]);
 
   const dashboardStats = {
     totalSKUs: inventory.length,
@@ -114,6 +58,15 @@ const Index = () => {
         description: `${fragranceData.name} has been added to your inventory.`,
       });
     }
+  };
+
+  const handleDeleteFragrance = (id: string) => {
+    const item = inventory.find(item => item.id === id);
+    setInventory(prev => prev.filter(item => item.id !== id));
+    toast({
+      title: "Fragrance Deleted",
+      description: `${item?.name} has been removed from your inventory.`,
+    });
   };
 
   const handleUpdateStock = (id: string, newStock: number) => {
@@ -188,6 +141,7 @@ const Index = () => {
           isOpen={isFormOpen}
           onClose={() => setIsFormOpen(false)}
           onSave={handleSaveFragrance}
+          onDelete={handleDeleteFragrance}
           editingItem={editingItem}
         />
       </div>

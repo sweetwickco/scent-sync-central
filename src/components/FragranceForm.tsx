@@ -1,62 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Plus, X, Save, Package } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Trash2, Save, Package, ArrowLeft } from "lucide-react";
 import { FragranceItem } from "./InventoryTable";
 
 interface FragranceFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (fragrance: Omit<FragranceItem, 'id' | 'lastUpdated'>) => void;
+  onDelete: (id: string) => void;
   editingItem?: FragranceItem | null;
 }
 
-interface ListingConnection {
-  id: string;
-  platform: 'etsy' | 'woocommerce';
-  listingId: string;
-  listingName: string;
-  variationId?: string;
-}
-
-export function FragranceForm({ isOpen, onClose, onSave, editingItem }: FragranceFormProps) {
+export function FragranceForm({ isOpen, onClose, onSave, onDelete, editingItem }: FragranceFormProps) {
   const [formData, setFormData] = useState({
-    sku: editingItem?.sku || '',
-    name: editingItem?.name || '',
-    currentStock: editingItem?.currentStock || 0,
-    lowStockThreshold: editingItem?.lowStockThreshold || 3,
+    sku: '',
+    name: '',
+    currentStock: 0,
+    lowStockThreshold: 3,
     description: '',
   });
 
-  const [connections, setConnections] = useState<ListingConnection[]>([
-    // Mock data for demo
-    {
-      id: '1',
-      platform: 'etsy',
-      listingId: 'ETY123456',
-      listingName: 'Vanilla Bean Candle - Multiple Sizes',
-      variationId: 'VAR789',
-    },
-    {
-      id: '2',
-      platform: 'woocommerce',
-      listingId: 'WOO987654',
-      listingName: 'Vanilla Bean Scented Candle',
-    },
-  ]);
-
-  const [newConnection, setNewConnection] = useState({
-    platform: 'etsy' as 'etsy' | 'woocommerce',
-    listingId: '',
-    listingName: '',
-    variationId: '',
+  const [platforms, setPlatforms] = useState({
+    etsy: false,
+    woocommerce: false,
   });
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    if (editingItem) {
+      setFormData({
+        sku: editingItem.sku,
+        name: editingItem.name,
+        currentStock: editingItem.currentStock,
+        lowStockThreshold: editingItem.lowStockThreshold,
+        description: '',
+      });
+      setPlatforms({
+        etsy: editingItem.etsyListings > 0,
+        woocommerce: editingItem.wooListings > 0,
+      });
+    } else {
+      setFormData({
+        sku: '',
+        name: '',
+        currentStock: 0,
+        lowStockThreshold: 3,
+        description: '',
+      });
+      setPlatforms({
+        etsy: false,
+        woocommerce: false,
+      });
+    }
+    setShowDeleteConfirm(false);
+  }, [editingItem, isOpen]);
 
   const handleSave = () => {
     if (!formData.sku || !formData.name) return;
@@ -72,35 +76,19 @@ export function FragranceForm({ isOpen, onClose, onSave, editingItem }: Fragranc
       name: formData.name,
       currentStock: formData.currentStock,
       lowStockThreshold: formData.lowStockThreshold,
-      etsyListings: connections.filter(c => c.platform === 'etsy').length,
-      wooListings: connections.filter(c => c.platform === 'woocommerce').length,
+      etsyListings: platforms.etsy ? 1 : 0,
+      wooListings: platforms.woocommerce ? 1 : 0,
       status: status as 'in-stock' | 'low-stock' | 'out-of-stock',
     });
 
     onClose();
   };
 
-  const addConnection = () => {
-    if (!newConnection.listingId || !newConnection.listingName) return;
-
-    setConnections([
-      ...connections,
-      {
-        ...newConnection,
-        id: Date.now().toString(),
-      },
-    ]);
-
-    setNewConnection({
-      platform: 'etsy',
-      listingId: '',
-      listingName: '',
-      variationId: '',
-    });
-  };
-
-  const removeConnection = (id: string) => {
-    setConnections(connections.filter(c => c.id !== id));
+  const handleDelete = () => {
+    if (editingItem) {
+      onDelete(editingItem.id);
+      onClose();
+    }
   };
 
   return (
@@ -120,174 +108,155 @@ export function FragranceForm({ isOpen, onClose, onSave, editingItem }: Fragranc
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Basic Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU *</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="e.g., VAN-001"
-                  />
+          {showDeleteConfirm ? (
+            /* Delete Confirmation */
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <Trash2 className="w-12 h-12 text-destructive mx-auto" />
+                  <div>
+                    <h3 className="text-lg font-semibold">Delete Fragrance</h3>
+                    <p className="text-muted-foreground">
+                      Are you sure you want to delete "{editingItem?.name}"? This action cannot be undone.
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Fragrance Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., Vanilla Bean"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="stock">Current Stock</Label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    min="0"
-                    value={formData.currentStock}
-                    onChange={(e) => setFormData({ ...formData, currentStock: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="threshold">Low Stock Threshold</Label>
-                  <Input
-                    id="threshold"
-                    type="number"
-                    min="1"
-                    value={formData.lowStockThreshold}
-                    onChange={(e) => setFormData({ ...formData, lowStockThreshold: parseInt(e.target.value) || 3 })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Additional notes about this fragrance..."
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Platform Connections */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Platform Connections</CardTitle>
-              <DialogDescription>
-                Connect this fragrance to specific listings on Etsy and WooCommerce
-              </DialogDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Existing Connections */}
-              {connections.length > 0 && (
-                <div className="space-y-3">
-                  {connections.map((connection) => (
-                    <div key={connection.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Badge variant={connection.platform === 'etsy' ? 'default' : 'secondary'}>
-                          {connection.platform === 'etsy' ? 'Etsy' : 'WooCommerce'}
-                        </Badge>
-                        <div>
-                          <p className="font-medium text-sm">{connection.listingName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            ID: {connection.listingId}
-                            {connection.variationId && ` • Variation: ${connection.variationId}`}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeConnection(connection.id)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="sku">SKU *</Label>
+                      <Input
+                        id="sku"
+                        value={formData.sku}
+                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        placeholder="e.g., VAN-001"
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Fragrance Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g., Vanilla Bean"
+                      />
+                    </div>
+                  </div>
 
-              <Separator />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stock">Current Stock</Label>
+                      <Input
+                        id="stock"
+                        type="number"
+                        min="0"
+                        value={formData.currentStock}
+                        onChange={(e) => setFormData({ ...formData, currentStock: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="threshold">Low Stock Threshold</Label>
+                      <Input
+                        id="threshold"
+                        type="number"
+                        min="1"
+                        value={formData.lowStockThreshold}
+                        onChange={(e) => setFormData({ ...formData, lowStockThreshold: parseInt(e.target.value) || 3 })}
+                      />
+                    </div>
+                  </div>
 
-              {/* Add New Connection */}
-              <div className="space-y-3">
-                <h4 className="font-medium">Add New Connection</h4>
-                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Platform</Label>
-                    <select
-                      value={newConnection.platform}
-                      onChange={(e) => setNewConnection({ ...newConnection, platform: e.target.value as 'etsy' | 'woocommerce' })}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value="etsy">Etsy</option>
-                      <option value="woocommerce">WooCommerce</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Listing ID</Label>
-                    <Input
-                      value={newConnection.listingId}
-                      onChange={(e) => setNewConnection({ ...newConnection, listingId: e.target.value })}
-                      placeholder="e.g., 123456789"
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Additional notes about this fragrance..."
+                      rows={3}
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Listing Name</Label>
-                    <Input
-                      value={newConnection.listingName}
-                      onChange={(e) => setNewConnection({ ...newConnection, listingName: e.target.value })}
-                      placeholder="e.g., Vanilla Bean Candle"
-                    />
+                </CardContent>
+              </Card>
+
+              {/* Platform Connections */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Platform Connections</CardTitle>
+                  <DialogDescription>
+                    Select which platforms this fragrance should be listed on
+                  </DialogDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium">Etsy</Label>
+                        <p className="text-xs text-muted-foreground">List this fragrance on Etsy marketplace</p>
+                      </div>
+                      <Switch
+                        checked={platforms.etsy}
+                        onCheckedChange={(checked) => setPlatforms({ ...platforms, etsy: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium">WooCommerce</Label>
+                        <p className="text-xs text-muted-foreground">List this fragrance on WooCommerce store</p>
+                      </div>
+                      <Switch
+                        checked={platforms.woocommerce}
+                        onCheckedChange={(checked) => setPlatforms({ ...platforms, woocommerce: checked })}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Variation ID (Optional)</Label>
-                    <Input
-                      value={newConnection.variationId}
-                      onChange={(e) => setNewConnection({ ...newConnection, variationId: e.target.value })}
-                      placeholder="For variations/options"
-                    />
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addConnection}
-                  disabled={!newConnection.listingId || !newConnection.listingName}
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Connection
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={!formData.sku || !formData.name}>
-            <Save className="w-4 h-4 mr-2" />
-            {editingItem ? 'Update' : 'Create'} Fragrance
-          </Button>
+          {showDeleteConfirm ? (
+            <>
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Go Back
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Yes, Delete
+              </Button>
+            </>
+          ) : (
+            <>
+              {editingItem && (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="mr-auto"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={!formData.sku || !formData.name}>
+                <Save className="w-4 h-4 mr-2" />
+                {editingItem ? 'Update' : 'Create'} Fragrance
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -133,16 +133,10 @@ export function InventoryTable({ items, onEditItem, onUpdateStock }: InventoryTa
                   </TableCell>
                   <TableCell>{getStatusBadge(item.status, item.currentStock)}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span>{item.etsyListings}</span>
-                      <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                    </div>
+                    <span>{item.etsyListings}</span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span>{item.wooListings}</span>
-                      <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                    </div>
+                    <span>{item.wooListings}</span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{item.lastUpdated}</TableCell>
                   <TableCell>
@@ -173,7 +167,9 @@ export function InventoryTable({ items, onEditItem, onUpdateStock }: InventoryTa
         {filteredItems.length === 0 && (
           <div className="text-center py-8">
             <Package className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground">No fragrances found matching your criteria</p>
+            <p className="text-muted-foreground">
+              {items.length === 0 ? "No candles in inventory" : "No fragrances found matching your criteria"}
+            </p>
           </div>
         )}
       </CardContent>
