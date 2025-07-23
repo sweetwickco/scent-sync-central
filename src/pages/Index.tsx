@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { InventoryDashboard } from "@/components/InventoryDashboard";
 import { InventoryTable, FragranceItem } from "@/components/InventoryTable";
@@ -9,11 +10,24 @@ import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FragranceItem | null>(null);
   
   // Empty inventory initially
   const [inventory, setInventory] = useState<FragranceItem[]>([]);
+
+  // Get active tab from URL params, default to "inventory"
+  const activeTab = searchParams.get('tab') || 'inventory';
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    if (value === 'inventory') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: value });
+    }
+  };
 
   const dashboardStats = {
     totalSKUs: inventory.length,
@@ -114,7 +128,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto p-6">
-        <Tabs defaultValue="inventory" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="inventory">Inventory Management</TabsTrigger>
             <TabsTrigger value="listings">Listings Management</TabsTrigger>

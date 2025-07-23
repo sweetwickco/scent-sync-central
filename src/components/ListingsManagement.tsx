@@ -1,12 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ExternalLink, RotateCcw, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AddListingForm } from "@/components/AddListingForm";
 import { FragranceItem } from "@/components/InventoryTable";
 
 export interface Listing {
@@ -32,7 +31,7 @@ interface ListingsManagementProps {
 
 export const ListingsManagement = ({ fragrances }: ListingsManagementProps) => {
   const { toast } = useToast();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const navigate = useNavigate();
   
   const [listings] = useState<Listing[]>([]);
 
@@ -58,16 +57,7 @@ export const ListingsManagement = ({ fragrances }: ListingsManagementProps) => {
   };
 
   const handleAddListing = () => {
-    setIsAddDialogOpen(true);
-  };
-
-  const handleSaveListing = (listingData: any) => {
-    console.log('Saving listing:', listingData);
-    toast({
-      title: "Listing Created",
-      description: "Your listing has been created successfully.",
-    });
-    setIsAddDialogOpen(false);
+    navigate('/add-listing');
   };
 
   const getStatusBadge = (status: Listing['status']) => {
@@ -142,24 +132,10 @@ export const ListingsManagement = ({ fragrances }: ListingsManagementProps) => {
             <RotateCcw className="w-4 h-4 mr-2" />
             Sync All
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleAddListing}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Listing
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Listing</DialogTitle>
-              </DialogHeader>
-              <AddListingForm
-                fragrances={fragrances}
-                onSave={handleSaveListing}
-                onCancel={() => setIsAddDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <Button onClick={handleAddListing}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Listing
+          </Button>
         </div>
       </div>
 
