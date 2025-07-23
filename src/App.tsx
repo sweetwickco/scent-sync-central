@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import AddListing from "./pages/AddListing";
 import NotFound from "./pages/NotFound";
+import { OptimizeListing } from "@/components/OptimizeListing";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/add-listing" element={<ProtectedRoute><AddListing /></ProtectedRoute>} />
+            <Route path="/optimize-listing" element={<ProtectedRoute><OptimizeListing /></ProtectedRoute>} />
+            <Route path="/optimize-listing/:optimizationId" element={<ProtectedRoute><OptimizeListing /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

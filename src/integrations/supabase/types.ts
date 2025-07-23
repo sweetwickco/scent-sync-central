@@ -98,6 +98,50 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_optimizations: {
+        Row: {
+          analysis_results: Json | null
+          created_at: string
+          id: string
+          listing_id: string | null
+          original_data: Json
+          recommendations: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_results?: Json | null
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          original_data: Json
+          recommendations?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_results?: Json | null
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          original_data?: Json
+          recommendations?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_optimizations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           created_at: string
