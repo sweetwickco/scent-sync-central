@@ -19,9 +19,9 @@ const Index = () => {
     totalSKUs: inventory.length,
     lowStock: inventory.filter(item => item.status === 'low-stock').length,
     outOfStock: inventory.filter(item => item.status === 'out-of-stock').length,
-    lastSyncTime: '15 mins ago',
-    etsySyncStatus: 'synced' as const,
-    wooSyncStatus: 'synced' as const,
+    lastSyncTime: 'Never',
+    etsySyncStatus: 'error' as const,
+    wooSyncStatus: 'error' as const,
   };
 
   const handleAddFragrance = () => {
@@ -135,7 +135,7 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="listings">
-            <ListingsManagement />
+            <ListingsManagement fragrances={inventory} />
           </TabsContent>
         </Tabs>
 

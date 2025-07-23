@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ExternalLink, RotateCcw, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AddListingForm } from "@/components/AddListingForm";
+import { FragranceItem } from "@/components/InventoryTable";
 
 export interface Listing {
   id: string;
@@ -24,47 +26,15 @@ export interface Listing {
   }>;
 }
 
-export const ListingsManagement = () => {
+interface ListingsManagementProps {
+  fragrances: FragranceItem[];
+}
+
+export const ListingsManagement = ({ fragrances }: ListingsManagementProps) => {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
-  // Mock data for demonstration
-  const [listings] = useState<Listing[]>([
-    {
-      id: '1',
-      title: 'Vanilla Bean Candle - 8oz',
-      platform: 'etsy',
-      sku: 'VAN-001',
-      price: 24.99,
-      status: 'active',
-      lastSync: '2 hours ago',
-      platformListingId: 'ETY-123456',
-      variations: [
-        { id: 'v1', name: 'Classic Label', price: 24.99, sku: 'VAN-001-CL' },
-        { id: 'v2', name: 'Premium Label', price: 29.99, sku: 'VAN-001-PR' }
-      ]
-    },
-    {
-      id: '2',
-      title: 'French Lavender Aromatherapy Candle',
-      platform: 'woocommerce',
-      sku: 'LAV-002',
-      price: 22.99,
-      status: 'active',
-      lastSync: '1 hour ago',
-      platformListingId: 'WOO-789012'
-    },
-    {
-      id: '3',
-      title: 'Sandalwood Musk Collection',
-      platform: 'etsy',
-      sku: 'SAN-003',
-      price: 27.99,
-      status: 'draft',
-      lastSync: '30 mins ago',
-      platformListingId: 'ETY-345678'
-    }
-  ]);
+  const [listings] = useState<Listing[]>([]);
 
   const stats = {
     totalListings: listings.length,
@@ -89,6 +59,15 @@ export const ListingsManagement = () => {
 
   const handleAddListing = () => {
     setIsAddDialogOpen(true);
+  };
+
+  const handleSaveListing = (listingData: any) => {
+    console.log('Saving listing:', listingData);
+    toast({
+      title: "Listing Created",
+      description: "Your listing has been created successfully.",
+    });
+    setIsAddDialogOpen(false);
   };
 
   const getStatusBadge = (status: Listing['status']) => {
@@ -170,22 +149,15 @@ export const ListingsManagement = () => {
                 Add Listing
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Listing</DialogTitle>
               </DialogHeader>
-              <div className="py-4">
-                <p className="text-muted-foreground">
-                  This is a placeholder for the add listing form. Here you would configure:
-                </p>
-                <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
-                  <li>Listing title and description</li>
-                  <li>Select fragrance SKU</li>
-                  <li>Choose platform (Etsy/WooCommerce)</li>
-                  <li>Set pricing and variations</li>
-                  <li>Upload images</li>
-                </ul>
-              </div>
+              <AddListingForm
+                fragrances={fragrances}
+                onSave={handleSaveListing}
+                onCancel={() => setIsAddDialogOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
