@@ -204,7 +204,7 @@ export const IdeaTable = ({ title, tableName, ideas, onRefresh }: IdeaTableProps
         <div className="flex gap-2">
           <Button 
             onClick={handleAddNew}
-            variant={ideas.length === 0 ? "secondary" : "default"}
+            variant={tableName === "new_product_ideas" ? "default" : (ideas.length === 0 ? "secondary" : "default")}
             disabled={showNewRow}
             size="sm"
           >

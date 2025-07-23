@@ -56,7 +56,6 @@ export const DesignIdeas = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-3xl font-bold tracking-tight">Ideas</h2>
         <div className="flex items-center justify-center py-12">
           <div className="text-muted-foreground">Loading ideas...</div>
         </div>
@@ -66,7 +65,6 @@ export const DesignIdeas = () => {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-3xl font-bold tracking-tight">Ideas</h2>
       
       <IdeaTable
         title="New Product Ideas"
