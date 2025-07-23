@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Plus, CheckCircle, Clock, Target } from "lucide-react";
+import { Plus, CheckCircle, Clock, Target, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +39,12 @@ interface TodoTask {
   created_at: string;
 }
 
+interface PlanWithTasks {
+  plan: Plan;
+  tasks: PlanTask[];
+  isExpanded?: boolean;
+}
+
 export const Planning = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -47,11 +53,14 @@ export const Planning = () => {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [planTasks, setPlanTasks] = useState<PlanTask[]>([]);
   const [showNewPlanPage, setShowNewPlanPage] = useState(false);
+  const [plansWithTasks, setPlansWithTasks] = useState<PlanWithTasks[]>([]);
+  const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!showNewPlanPage) {
       fetchPlans();
       fetchTodoTasks();
+      fetchPlansWithTasks();
     }
   }, [showNewPlanPage]);
 
@@ -142,6 +151,68 @@ export const Planning = () => {
     fetchPlanTasks(plan.id);
   };
 
+  const fetchPlansWithTasks = async () => {
+    const { data: plansData, error: plansError } = await supabase
+      .from('plans')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (plansError) {
+      toast({
+        title: "Error fetching plans",
+        description: plansError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const plansWithTasksData: PlanWithTasks[] = [];
+
+    for (const plan of plansData || []) {
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('plan_tasks')
+        .select('*')
+        .eq('plan_id', plan.id)
+        .order('order_index');
+
+      if (!tasksError) {
+        plansWithTasksData.push({
+          plan: plan as Plan,
+          tasks: tasksData || [],
+        });
+      }
+    }
+
+    setPlansWithTasks(plansWithTasksData);
+  };
+
+  const togglePlanExpansion = (planId: string) => {
+    const newExpanded = new Set(expandedPlans);
+    if (newExpanded.has(planId)) {
+      newExpanded.delete(planId);
+    } else {
+      newExpanded.add(planId);
+    }
+    setExpandedPlans(newExpanded);
+  };
+
+  const togglePlanTask = async (taskId: string, completed: boolean) => {
+    const { error } = await supabase
+      .from('plan_tasks')
+      .update({ completed })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error updating task",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      fetchPlansWithTasks();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -200,43 +271,80 @@ export const Planning = () => {
           </CardContent>
         </Card>
 
-        {/* Todo Tasks */}
+        {/* Plan Tasks Overview */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
-              Todo Tasks
+              Plan Tasks
             </CardTitle>
-            <CardDescription>Tasks from your plans</CardDescription>
+            <CardDescription>Tasks organized by plan</CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px]">
               <div className="space-y-2">
-                {todoTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={`p-3 border rounded ${
-                      task.completed ? 'opacity-60 bg-muted' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <Checkbox
-                        checked={task.completed}
-                        onCheckedChange={(checked) => toggleTask(task.id, !!checked)}
-                      />
+                {plansWithTasks.map((planWithTasks) => (
+                  <div key={planWithTasks.plan.id} className="border rounded">
+                    {/* Plan Overview Box */}
+                    <div
+                      className="p-3 cursor-pointer hover:bg-muted transition-colors flex items-center justify-between"
+                      onClick={() => togglePlanExpansion(planWithTasks.plan.id)}
+                    >
                       <div className="flex-1">
-                        <h5 className={`font-medium text-sm ${
-                          task.completed ? 'line-through' : ''
-                        }`}>
-                          {task.title}
+                        <h5 className="font-medium text-sm">
+                          {planWithTasks.plan.title}
                         </h5>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {task.description}
-                          </p>
+                        <p className="text-xs text-muted-foreground">
+                          {planWithTasks.tasks.length} tasks
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {planWithTasks.tasks.filter(t => t.completed).length}/{planWithTasks.tasks.length}
+                        </Badge>
+                        {expandedPlans.has(planWithTasks.plan.id) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
                         )}
                       </div>
                     </div>
+                    
+                    {/* Expanded Task List */}
+                    {expandedPlans.has(planWithTasks.plan.id) && (
+                      <div className="border-t bg-muted/30">
+                        <div className="p-2 space-y-1">
+                          {planWithTasks.tasks.map((task) => (
+                            <div
+                              key={task.id}
+                              className={`p-2 rounded text-xs ${
+                                task.completed ? 'opacity-60' : ''
+                              }`}
+                            >
+                              <div className="flex items-start gap-2">
+                                <Checkbox
+                                  checked={task.completed}
+                                  onCheckedChange={(checked) => togglePlanTask(task.id, !!checked)}
+                                  className="mt-0.5"
+                                />
+                                <div className="flex-1">
+                                  <p className={`font-medium ${
+                                    task.completed ? 'line-through' : ''
+                                  }`}>
+                                    {task.title}
+                                  </p>
+                                  {task.description && (
+                                    <p className="text-muted-foreground line-clamp-2 mt-1">
+                                      {task.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
