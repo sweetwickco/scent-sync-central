@@ -132,10 +132,10 @@ const Index = () => {
       <div className="container mx-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="inventory">Inventory Management</TabsTrigger>
+            <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="listings">Listings</TabsTrigger>
+            <TabsTrigger value="listings-optimizer">Optimizer</TabsTrigger>
             <TabsTrigger value="design-ideas">Ideas</TabsTrigger>
-            <TabsTrigger value="listings-optimizer">Listings Optimizer</TabsTrigger>
-            <TabsTrigger value="listings">Listings Management</TabsTrigger>
           </TabsList>
           
           <TabsContent value="inventory" className="space-y-8">
@@ -156,12 +156,12 @@ const Index = () => {
             <ListingsManagement fragrances={inventory} />
           </TabsContent>
           
-          <TabsContent value="design-ideas">
-            <DesignIdeas />
-          </TabsContent>
-          
           <TabsContent value="listings-optimizer">
             <ListingsOptimizer />
+          </TabsContent>
+          
+          <TabsContent value="design-ideas">
+            <DesignIdeas />
           </TabsContent>
         </Tabs>
 
