@@ -7,6 +7,10 @@ import { FragranceForm } from "@/components/FragranceForm";
 import { ListingsManagement } from "@/components/ListingsManagement";
 import { DesignIdeas } from "@/components/DesignIdeas";
 import { ListingsOptimizer } from "@/components/ListingsOptimizer";
+import { Planning } from "@/components/Planning";
+import { Supplies } from "@/components/Supplies";
+import { Products } from "@/components/Products";
+import { Production } from "@/components/Production";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
@@ -131,11 +135,15 @@ const Index = () => {
       <Header />
       <div className="container mx-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="listings">Listings</TabsTrigger>
             <TabsTrigger value="listings-optimizer">Optimizer</TabsTrigger>
             <TabsTrigger value="design-ideas">Ideas</TabsTrigger>
+            <TabsTrigger value="planning">Planning</TabsTrigger>
+            <TabsTrigger value="supplies">Supplies</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="production">Production</TabsTrigger>
           </TabsList>
           
           <TabsContent value="inventory" className="space-y-8">
@@ -162,6 +170,22 @@ const Index = () => {
           
           <TabsContent value="design-ideas">
             <DesignIdeas />
+          </TabsContent>
+          
+          <TabsContent value="planning">
+            <Planning />
+          </TabsContent>
+          
+          <TabsContent value="supplies">
+            <Supplies />
+          </TabsContent>
+          
+          <TabsContent value="products">
+            <Products />
+          </TabsContent>
+          
+          <TabsContent value="production">
+            <Production />
           </TabsContent>
         </Tabs>
 
