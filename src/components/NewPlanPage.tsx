@@ -212,7 +212,7 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
         </div>
       </div>
 
-      <Card className="max-w-4xl">
+      <Card className="w-full">
         <CardContent className="p-8">
           {currentStep === 'form' && (
             <div className="space-y-6">
