@@ -60,12 +60,22 @@ Please return a JSON object with the following structure:
         messages: [
           { 
             role: 'system', 
-            content: 'You are a business planning expert. Always respond with valid JSON containing the complete plan structure with planSummary, timelineBreakdown, marketingStrategy, operationalConsiderations, risksConstraints, keyMetrics, and tasks array.' 
+            content: `You are a strategic planning assistant for Sweet Wick, a premium handmade candle brand. You MUST respond with valid JSON only. The JSON structure must include:
+            {
+              "planSummary": "2-3 sentence overview specific to Sweet Wick's business model",
+              "timelineBreakdown": "Detailed week-by-week breakdown for the timeline specified",
+              "marketingStrategy": "Specific marketing tactics for candle business on Etsy/website",
+              "operationalConsiderations": "Production, batching, scent supplies, fulfillment details",
+              "risksConstraints": "Specific bottlenecks and constraints for candle business",
+              "keyMetrics": "Relevant KPIs for candle sales and marketing",
+              "tasks": [{"title": "Specific task", "description": "Actionable description"}]
+            }
+            Do not include any text outside the JSON. Make all content specific to Sweet Wick's candle business model.`
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: 0.3,
+        max_tokens: 3000,
       }),
     });
 
@@ -81,51 +91,65 @@ Please return a JSON object with the following structure:
     // Try to parse the JSON response
     let parsedTasks;
     try {
-      parsedTasks = JSON.parse(generatedContent);
+      // Clean the response to ensure it's pure JSON
+      let cleanedContent = generatedContent.trim();
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      }
+      if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/```\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      parsedTasks = JSON.parse(cleanedContent);
+      
+      // Validate that we have the required structure
+      if (!parsedTasks.tasks || !Array.isArray(parsedTasks.tasks)) {
+        throw new Error('Invalid response structure');
+      }
     } catch (parseError) {
       // If JSON parsing fails, try to extract tasks from a more flexible format
       console.log('JSON parsing failed, attempting fallback parsing');
       
-      // Create a fallback response with full plan structure
+      // Create a Sweet Wick-specific fallback response
       parsedTasks = {
-        planSummary: "This plan aims to achieve your business goals through strategic planning and execution.",
-        timelineBreakdown: "Please regenerate for a detailed timeline based on your specific inputs.",
-        marketingStrategy: "Marketing approach will be tailored to your target audience and budget.",
-        operationalConsiderations: "Operational planning will focus on efficiency and resource optimization.",
-        risksConstraints: "Consider potential bottlenecks and resource limitations.",
-        keyMetrics: "Track progress through relevant KPIs and success metrics.",
+        planSummary: `This Sweet Wick strategy focuses on ${formData.goal || 'achieving your business goals'} through targeted candle marketing and efficient production planning. The plan leverages Sweet Wick's strengths in hyper-niched label design and seasonal positioning to drive sales on Etsy and your website.`,
+        timelineBreakdown: `Based on your ${formData.timeline || 'specified timeline'}, this plan provides a phased approach starting with product development and label design, followed by listing optimization, marketing campaigns, and performance monitoring. Each phase builds on Sweet Wick's core strengths in visual storytelling and niche targeting.`,
+        marketingStrategy: `Focus on Sweet Wick's signature approach: stunning, theme-based labels that create emotional connections. Leverage seasonal keywords on Etsy, create Instagram-worthy product photography, and use targeted ads to reach candle enthusiasts who value unique, handmade products with compelling visual stories.`,
+        operationalConsiderations: `Plan scent batching around demand forecasts, ensure adequate supplies for hand-pouring, prepare labels in advance for quick fulfillment. Consider made-to-order timing and seasonal inventory needs. Streamline production workflow to maintain Sweet Wick's quality standards while scaling efficiently.`,
+        risksConstraints: `Key constraints include limited production capacity for hand-poured candles, seasonal supply chain delays, and budget limitations for paid advertising. Monitor scent supply levels and label printing capacity to avoid stockouts during peak demand periods.`,
+        keyMetrics: `Track Etsy listing views, conversion rates, average order value, customer acquisition cost through ads, repeat purchase rate for wax melts, social media engagement on product posts, and overall revenue growth against your target goals.`,
         tasks: [
           {
-            title: "Market Research and Analysis",
-            description: "Conduct thorough market research to understand your target audience, competitors, and market opportunities. Analyze pricing strategies and identify your unique value proposition."
+            title: "Design Halloween-Themed Labels & Scent Combinations",
+            description: "Create 3-5 eye-catching Halloween label designs paired with seasonal scent profiles. Focus on themes that resonate with your target audience and photograph well for online listings."
           },
           {
-            title: "Business Model Validation", 
-            description: "Validate your business model by testing key assumptions. Create prototypes or MVP versions of your products/services and gather feedback from potential customers."
+            title: "Optimize Etsy Listings with Seasonal Keywords",
+            description: "Research and implement Halloween-specific keywords in your Etsy titles, tags, and descriptions. Focus on terms like 'halloween candles', 'spooky decor', 'autumn scents', and 'seasonal gifts'."
           },
           {
-            title: "Financial Planning and Budgeting",
-            description: "Develop detailed financial projections including startup costs, operational expenses, revenue forecasts, and break-even analysis. Set up accounting systems and financial tracking."
+            title: "Plan Scent Batching & Production Schedule",
+            description: "Organize your scent inventory and create a production timeline that aligns with your sales goals. Ensure adequate supplies for anticipated demand and plan batching to maximize efficiency."
           },
           {
-            title: "Brand Development and Positioning",
-            description: "Create a strong brand identity including logo, messaging, and visual elements. Develop your brand positioning strategy to differentiate from competitors."
+            title: "Create Social Media Content Calendar",
+            description: "Develop Instagram and Pinterest content showcasing your Halloween collection. Focus on lifestyle shots, behind-the-scenes content, and user-generated content to build engagement organically."
           },
           {
-            title: "Marketing Strategy Development",
-            description: "Create a comprehensive marketing plan including digital marketing, social media strategy, content marketing, and customer acquisition tactics within your budget."
+            title: "Launch Targeted Etsy Ad Campaigns",
+            description: "Set up Etsy ads targeting Halloween and seasonal candle keywords. Start with a small budget and optimize based on performance data. Focus on high-converting product photos and compelling titles."
           },
           {
-            title: "Operational Framework Setup", 
-            description: "Establish operational processes, supply chain management, quality control procedures, and workflow systems to ensure smooth business operations."
+            title: "Develop Bundle Offers for Increased AOV",
+            description: "Create wax melt bundles and candle + wax melt combos to increase average order value. Position these as perfect seasonal gifts or sample packs for new customers."
           },
           {
-            title: "Legal and Compliance Requirements",
-            description: "Research and complete all necessary legal requirements including business registration, permits, licenses, insurance, and compliance with industry regulations."
+            title: "Monitor Performance & Adjust Strategy",
+            description: "Track key metrics weekly and adjust your approach based on what's working. Be prepared to increase ad spend or pivot messaging if initial results exceed expectations."
           },
           {
-            title: "Launch Preparation and Execution",
-            description: "Plan and execute your launch strategy including soft launch testing, marketing campaigns, inventory preparation, and customer support systems."
+            title: "Prepare for Holiday Season Transition",
+            description: "Plan your transition from Halloween to Christmas/winter themes. Begin developing next seasonal collection while current campaign is running to maintain momentum."
           }
         ]
       };
