@@ -133,7 +133,7 @@ const Index = () => {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="inventory">Inventory Management</TabsTrigger>
             <TabsTrigger value="listings">Listings Management</TabsTrigger>
-            <TabsTrigger value="design-ideas">Design Ideas</TabsTrigger>
+            <TabsTrigger value="design-ideas">Ideas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="inventory" className="space-y-8">

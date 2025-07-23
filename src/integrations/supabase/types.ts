@@ -161,6 +161,42 @@ export type Database = {
           },
         ]
       }
+      new_product_ideas: {
+        Row: {
+          collection_targeting: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_starred: boolean
+          name: string
+          product_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collection_targeting?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_starred?: boolean
+          name: string
+          product_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          collection_targeting?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_starred?: boolean
+          name?: string
+          product_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       platforms: {
         Row: {
           api_endpoint: string | null
