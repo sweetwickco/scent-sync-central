@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Package2, DollarSign, ArrowRight, Calculator, Minus, Edit2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProductCategory {
@@ -48,6 +49,7 @@ interface ProductSupply {
 }
 
 export const Products = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [categories, setCategories] = useState<ProductCategoryWithProducts[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategoryWithProducts | null>(null);
@@ -160,11 +162,11 @@ export const Products = () => {
   };
 
   const handleCreateCategory = async () => {
-    if (!categoryForm.name.trim()) return;
+    if (!categoryForm.name.trim() || !user) return;
 
     const { error } = await supabase
       .from('product_categories')
-      .insert({ name: categoryForm.name.trim() });
+      .insert({ name: categoryForm.name.trim(), user_id: user.id });
 
     if (error) {
       toast({
@@ -184,13 +186,14 @@ export const Products = () => {
   };
 
   const handleCreateProduct = async () => {
-    if (!productForm.name.trim() || !productForm.category_id) return;
+    if (!productForm.name.trim() || !productForm.category_id || !user) return;
 
     const { error } = await supabase
       .from('products')
       .insert({
         name: productForm.name.trim(),
-        category_id: productForm.category_id
+        category_id: productForm.category_id,
+        user_id: user.id
       });
 
     if (error) {

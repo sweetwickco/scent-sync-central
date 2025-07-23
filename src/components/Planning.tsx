@@ -49,6 +49,7 @@ export const Planning = () => {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [planTasks, setPlanTasks] = useState<PlanTask[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<'form' | 'generating' | 'results'>('form');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedTasks, setGeneratedTasks] = useState<any[]>([]);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<number>>(new Set());
@@ -122,6 +123,8 @@ export const Planning = () => {
 
   const generatePlan = async () => {
     setIsGenerating(true);
+    setModalStep('generating');
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-business-plan', {
         body: { 
@@ -135,13 +138,15 @@ export const Planning = () => {
       }
 
       setGeneratedTasks(data.tasks || []);
-      setSelectedTaskIds(new Set(data.tasks?.map((_: any, index: number) => index) || []));
+      setSelectedTaskIds(new Set(data.tasks?.map((_: any, index: number) => index) || [])); 
+      setModalStep('results');
     } catch (error) {
       toast({
         title: "Error generating plan",
         description: "Failed to generate AI plan. Please try again.",
         variant: "destructive",
       });
+      setModalStep('form');
     } finally {
       setIsGenerating(false);
     }
@@ -231,6 +236,7 @@ export const Planning = () => {
     });
     setGeneratedTasks([]);
     setSelectedTaskIds(new Set());
+    setModalStep('form');
   };
 
   const toggleTask = async (taskId: string, completed: boolean) => {
@@ -273,86 +279,120 @@ export const Planning = () => {
             <DialogHeader>
               <DialogTitle>Create New Business Plan</DialogTitle>
               <DialogDescription>
-                Fill out the details below and AI will generate a detailed action plan for you.
+                {modalStep === 'form' && "Fill out the details below and AI will generate a detailed action plan for you."}
+                {modalStep === 'generating' && "AI is generating your personalized business plan..."}
+                {modalStep === 'results' && "Review your generated plan and select tasks to add to your todo list."}
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            {modalStep === 'form' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Plan Title</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g., Launch New Candle Collection"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="goal">Main Goal</Label>
+                    <Input
+                      id="goal"
+                      value={formData.goal}
+                      onChange={(e) => setFormData(prev => ({ ...prev, goal: e.target.value }))}
+                      placeholder="e.g., Increase revenue by 25%"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="timeline">Timeline</Label>
+                    <Input
+                      id="timeline"
+                      value={formData.timeline}
+                      onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
+                      placeholder="e.g., 3 months"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="budget">Budget</Label>
+                    <Input
+                      id="budget"
+                      value={formData.budget}
+                      onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                      placeholder="e.g., $5,000"
+                    />
+                  </div>
+                </div>
+                
                 <div>
-                  <Label htmlFor="title">Plan Title</Label>
+                  <Label htmlFor="target_audience">Target Audience</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g., Launch New Candle Collection"
+                    id="target_audience"
+                    value={formData.target_audience}
+                    onChange={(e) => setFormData(prev => ({ ...prev, target_audience: e.target.value }))}
+                    placeholder="e.g., Young professionals aged 25-35"
                   />
                 </div>
+                
                 <div>
-                  <Label htmlFor="goal">Main Goal</Label>
-                  <Input
-                    id="goal"
-                    value={formData.goal}
-                    onChange={(e) => setFormData(prev => ({ ...prev, goal: e.target.value }))}
-                    placeholder="e.g., Increase revenue by 25%"
+                  <Label htmlFor="description">Detailed Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe your plan in detail, what you want to accomplish, challenges you expect, etc."
+                    rows={4}
                   />
                 </div>
+                
+                <Button 
+                  onClick={generatePlan} 
+                  disabled={isGenerating || !formData.title || !formData.description}
+                  className="w-full"
+                >
+                  Generate AI Plan
+                </Button>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="timeline">Timeline</Label>
-                  <Input
-                    id="timeline"
-                    value={formData.timeline}
-                    onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
-                    placeholder="e.g., 3 months"
-                  />
+            )}
+
+            {modalStep === 'generating' && (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="w-full max-w-xs bg-secondary rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
                 </div>
-                <div>
-                  <Label htmlFor="budget">Budget</Label>
-                  <Input
-                    id="budget"
-                    value={formData.budget}
-                    onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                    placeholder="e.g., $5,000"
-                  />
+                <p className="text-center text-muted-foreground">
+                  Creating your personalized action plan...
+                </p>
+              </div>
+            )}
+
+            {modalStep === 'results' && (
+              <div className="space-y-6">
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold">Plan Summary</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setModalStep('form')}>
+                      Edit & Rerun
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div><strong>Title:</strong> {formData.title}</div>
+                    <div><strong>Goal:</strong> {formData.goal}</div>
+                    <div><strong>Timeline:</strong> {formData.timeline}</div>
+                    <div><strong>Budget:</strong> {formData.budget}</div>
+                    <div className="col-span-2"><strong>Target:</strong> {formData.target_audience}</div>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="target_audience">Target Audience</Label>
-                <Input
-                  id="target_audience"
-                  value={formData.target_audience}
-                  onChange={(e) => setFormData(prev => ({ ...prev, target_audience: e.target.value }))}
-                  placeholder="e.g., Young professionals aged 25-35"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Detailed Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe your plan in detail, what you want to accomplish, challenges you expect, etc."
-                  rows={4}
-                />
-              </div>
-              
-              <Button 
-                onClick={generatePlan} 
-                disabled={isGenerating || !formData.title || !formData.description}
-                className="w-full"
-              >
-                {isGenerating ? "Generating Plan..." : "Generate AI Plan"}
-              </Button>
-              
-              {generatedTasks.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Generated Action Plan</h4>
-                  <p className="text-sm text-muted-foreground">
+
+                <div>
+                  <h4 className="font-semibold mb-3">Generated Action Plan</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
                     Select the tasks you want to add to your todo list:
                   </p>
                   
@@ -381,12 +421,17 @@ export const Planning = () => {
                     </div>
                   </ScrollArea>
                   
-                  <Button onClick={savePlan} className="w-full">
-                    Save Plan & Add {selectedTaskIds.size} Tasks to Todo
-                  </Button>
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="outline" onClick={generatePlan} disabled={isGenerating}>
+                      {isGenerating ? "Regenerating..." : "Regenerate Plan"}
+                    </Button>
+                    <Button onClick={savePlan} className="flex-1">
+                      Save Plan & Add {selectedTaskIds.size} Tasks to Todo
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

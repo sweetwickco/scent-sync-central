@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Factory, Calculator, Play, CheckCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 interface Product {
@@ -45,6 +46,7 @@ interface ProductSupply {
 }
 
 export const Production = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [batches, setBatches] = useState<ProductionBatch[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -78,7 +80,7 @@ export const Production = () => {
         variant: "destructive",
       });
     } else {
-      setBatches(data || []);
+      setBatches((data as ProductionBatch[]) || []);
     }
   };
 
@@ -161,7 +163,7 @@ export const Production = () => {
   };
 
   const saveBatch = async () => {
-    if (!selectedProduct || !batchSize || calculatedSupplies.length === 0) return;
+    if (!selectedProduct || !batchSize || calculatedSupplies.length === 0 || !user) return;
 
     const { error } = await supabase
       .from('production_batches')
@@ -169,7 +171,8 @@ export const Production = () => {
         product_id: selectedProduct,
         batch_size: parseInt(batchSize),
         calculated_supplies: calculatedSupplies,
-        status: 'planned'
+        status: 'planned',
+        user_id: user.id
       });
 
     if (error) {
