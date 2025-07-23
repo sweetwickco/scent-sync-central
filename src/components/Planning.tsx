@@ -196,6 +196,17 @@ export const Planning = () => {
     setExpandedPlans(newExpanded);
   };
 
+  // Helper function to safely render content that might be an object or string
+  const renderContent = (content: any) => {
+    if (typeof content === 'string') {
+      return content;
+    } else if (typeof content === 'object' && content !== null) {
+      // If it's an object, convert it to readable text
+      return Object.entries(content).map(([key, value]) => `${key}: ${value}`).join('\n\n');
+    }
+    return String(content);
+  };
+
   const togglePlanTask = async (taskId: string, completed: boolean) => {
     const { error } = await supabase
       .from('plan_tasks')
@@ -364,7 +375,8 @@ export const Planning = () => {
             <CardDescription>{selectedPlan.description}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Plan Input Fields */}
               {selectedPlan.fields_data && (
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded">
                   <div>
@@ -386,10 +398,90 @@ export const Planning = () => {
                 </div>
               )}
               
+              {/* AI Generated Plan Content */}
+              {selectedPlan.ai_generated_plan && (
+                <div className="space-y-4">
+                  <Separator />
+                  <h3 className="text-lg font-semibold">AI Strategy & Analysis</h3>
+                  
+                  {/* Plan Summary */}
+                  {selectedPlan.ai_generated_plan.planSummary && (
+                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                      <h4 className="font-semibold mb-2 text-primary flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Plan Summary
+                      </h4>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">
+                        {renderContent(selectedPlan.ai_generated_plan.planSummary)}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Timeline Breakdown */}
+                    {selectedPlan.ai_generated_plan.timelineBreakdown && (
+                      <div className="bg-card p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2 text-primary flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Timeline Breakdown
+                        </h4>
+                        <div className="text-sm leading-relaxed whitespace-pre-line">
+                          {renderContent(selectedPlan.ai_generated_plan.timelineBreakdown)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Marketing Strategy */}
+                    {selectedPlan.ai_generated_plan.marketingStrategy && (
+                      <div className="bg-card p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2 text-primary">Marketing Strategy</h4>
+                        <div className="text-sm leading-relaxed whitespace-pre-line">
+                          {renderContent(selectedPlan.ai_generated_plan.marketingStrategy)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Operational Considerations */}
+                    {selectedPlan.ai_generated_plan.operationalConsiderations && (
+                      <div className="bg-card p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2 text-primary">Operational Considerations</h4>
+                        <div className="text-sm leading-relaxed whitespace-pre-line">
+                          {renderContent(selectedPlan.ai_generated_plan.operationalConsiderations)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Risks & Constraints */}
+                    {selectedPlan.ai_generated_plan.risksConstraints && (
+                      <div className="bg-card p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2 text-primary">Risks & Constraints</h4>
+                        <div className="text-sm leading-relaxed whitespace-pre-line">
+                          {renderContent(selectedPlan.ai_generated_plan.risksConstraints)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Key Metrics */}
+                    {selectedPlan.ai_generated_plan.keyMetrics && (
+                      <div className="bg-card p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2 text-primary">Key Metrics</h4>
+                        <div className="text-sm leading-relaxed whitespace-pre-line">
+                          {renderContent(selectedPlan.ai_generated_plan.keyMetrics)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <Separator />
               
+              {/* Plan Tasks */}
               <div>
-                <h4 className="font-semibold mb-3">Plan Tasks</h4>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Plan Tasks
+                </h4>
                 <div className="space-y-2">
                   {planTasks.map((task) => (
                     <div
