@@ -14,16 +14,206 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fragrances: {
+        Row: {
+          cost: number | null
+          created_at: string
+          current_stock: number
+          description: string | null
+          dimensions: string | null
+          id: string
+          low_stock_threshold: number
+          name: string
+          notes: string | null
+          price: number | null
+          sku: string
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          dimensions?: string | null
+          id?: string
+          low_stock_threshold?: number
+          name: string
+          notes?: string | null
+          price?: number | null
+          sku: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          dimensions?: string | null
+          id?: string
+          low_stock_threshold?: number
+          name?: string
+          notes?: string | null
+          price?: number | null
+          sku?: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      listings: {
+        Row: {
+          created_at: string
+          description: string | null
+          external_id: string | null
+          fragrance_id: string
+          id: string
+          last_synced_at: string | null
+          platform_id: string
+          price: number
+          quantity: number
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          external_id?: string | null
+          fragrance_id: string
+          id?: string
+          last_synced_at?: string | null
+          platform_id: string
+          price: number
+          quantity?: number
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          external_id?: string | null
+          fragrance_id?: string
+          id?: string
+          last_synced_at?: string | null
+          platform_id?: string
+          price?: number
+          quantity?: number
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_fragrance_id_fkey"
+            columns: ["fragrance_id"]
+            isOneToOne: false
+            referencedRelation: "fragrances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platforms: {
+        Row: {
+          api_endpoint: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          type: Database["public"]["Enums"]["platform_type"]
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          type: Database["public"]["Enums"]["platform_type"]
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: Database["public"]["Enums"]["platform_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          id: string
+          message: string | null
+          operation: string
+          platform_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["sync_status"]
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          id?: string
+          message?: string | null
+          operation: string
+          platform_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["sync_status"]
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          id?: string
+          message?: string | null
+          operation?: string
+          platform_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["sync_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_fragrance_status: {
+        Args: { stock: number; threshold: number }
+        Returns: string
+      }
+      get_listing_counts: {
+        Args: { fragrance_uuid: string }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      listing_status: "active" | "inactive" | "draft" | "sold"
+      platform_type: "etsy" | "woocommerce"
+      sync_status: "pending" | "syncing" | "success" | "error"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +340,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      listing_status: ["active", "inactive", "draft", "sold"],
+      platform_type: ["etsy", "woocommerce"],
+      sync_status: ["pending", "syncing", "success", "error"],
+    },
   },
 } as const
