@@ -195,6 +195,17 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
     setCurrentStep('form');
   };
 
+  // Helper function to safely render content that might be an object or string
+  const renderContent = (content: any) => {
+    if (typeof content === 'string') {
+      return content;
+    } else if (typeof content === 'object' && content !== null) {
+      // If it's an object, convert it to readable text
+      return Object.entries(content).map(([key, value]) => `${key}: ${value}`).join('\n\n');
+    }
+    return String(content);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -385,35 +396,35 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
                   {generatedPlan.timelineBreakdown && (
                     <div className="bg-card p-4 rounded-lg border">
                       <h4 className="font-semibold mb-2 text-primary">Timeline Breakdown</h4>
-                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.timelineBreakdown}</div>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{renderContent(generatedPlan.timelineBreakdown)}</div>
                     </div>
                   )}
 
                   {generatedPlan.marketingStrategy && (
                     <div className="bg-card p-4 rounded-lg border">
                       <h4 className="font-semibold mb-2 text-primary">Marketing Strategy</h4>
-                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.marketingStrategy}</div>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{renderContent(generatedPlan.marketingStrategy)}</div>
                     </div>
                   )}
 
                   {generatedPlan.operationalConsiderations && (
                     <div className="bg-card p-4 rounded-lg border">
                       <h4 className="font-semibold mb-2 text-primary">Operational Considerations</h4>
-                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.operationalConsiderations}</div>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{renderContent(generatedPlan.operationalConsiderations)}</div>
                     </div>
                   )}
 
                   {generatedPlan.risksConstraints && (
                     <div className="bg-card p-4 rounded-lg border">
                       <h4 className="font-semibold mb-2 text-primary">Risks & Constraints</h4>
-                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.risksConstraints}</div>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{renderContent(generatedPlan.risksConstraints)}</div>
                     </div>
                   )}
 
                   {generatedPlan.keyMetrics && (
                     <div className="bg-card p-4 rounded-lg border">
                       <h4 className="font-semibold mb-2 text-primary">Key Metrics</h4>
-                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.keyMetrics}</div>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{renderContent(generatedPlan.keyMetrics)}</div>
                     </div>
                   )}
                 </div>
