@@ -20,7 +20,7 @@ export const NewPlanPage = ({ onBack }: NewPlanPageProps) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState<'form' | 'generating' | 'results'>('form');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedTasks, setGeneratedTasks] = useState<any[]>([]);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<number>>(new Set());
 
   // Form state
@@ -96,7 +96,7 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
         throw error;
       }
 
-      setGeneratedTasks(data.tasks || []);
+      setGeneratedPlan(data);
       setSelectedTaskIds(new Set(data.tasks?.map((_: any, index: number) => index) || [])); 
       setCurrentStep('results');
     } catch (error) {
@@ -118,7 +118,7 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
         title: formData.title,
         description: formData.description,
         fields_data: formData,
-        ai_generated_plan: generatedTasks,
+        ai_generated_plan: generatedPlan,
         status: 'draft',
         user_id: user?.id!
       })
@@ -136,7 +136,7 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
 
     // Save selected tasks
     const tasksToAdd = Array.from(selectedTaskIds).map(index => {
-      const task = generatedTasks[index];
+      const task = generatedPlan.tasks[index];
       return {
         plan_id: planData.id,
         title: task.title,
@@ -190,7 +190,7 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
       target_audience: '',
       description: ''
     });
-    setGeneratedTasks([]);
+    setGeneratedPlan(null);
     setSelectedTaskIds(new Set());
     setCurrentStep('form');
   };
@@ -332,84 +332,137 @@ Optimize every plan for Sweet Wick's real-world workflow: lean team, evolving pr
             </div>
           )}
 
-          {currentStep === 'results' && (
-            <div className="space-y-8">
-              <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/20">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    Your Sweet Wick Strategy
-                  </h3>
-                  <Button variant="outline" onClick={() => setCurrentStep('form')}>
-                    Edit & Regenerate
-                  </Button>
+          {currentStep === 'results' && generatedPlan && (
+            <div className="grid grid-cols-3 gap-8">
+              {/* Main Plan Details - Left Side */}
+              <div className="col-span-2 space-y-6">
+                <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/20">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      Your Sweet Wick Strategy
+                    </h3>
+                    <Button variant="outline" onClick={() => setCurrentStep('form')}>
+                      Edit & Regenerate
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-1">
+                      <span className="font-medium text-muted-foreground">Title:</span>
+                      <p className="font-medium">{formData.title}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-medium text-muted-foreground">Goal:</span>
+                      <p className="font-medium">{formData.goal}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-medium text-muted-foreground">Timeline:</span>
+                      <p className="font-medium">{formData.timeline}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-medium text-muted-foreground">Budget:</span>
+                      <p className="font-medium">{formData.budget}</p>
+                    </div>
+                    {formData.target_audience && (
+                      <div className="col-span-2 space-y-1">
+                        <span className="font-medium text-muted-foreground">Target Audience:</span>
+                        <p className="font-medium">{formData.target_audience}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-1">
-                    <span className="font-medium text-muted-foreground">Title:</span>
-                    <p className="font-medium">{formData.title}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="font-medium text-muted-foreground">Goal:</span>
-                    <p className="font-medium">{formData.goal}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="font-medium text-muted-foreground">Timeline:</span>
-                    <p className="font-medium">{formData.timeline}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="font-medium text-muted-foreground">Budget:</span>
-                    <p className="font-medium">{formData.budget}</p>
-                  </div>
-                  {formData.target_audience && (
-                    <div className="col-span-2 space-y-1">
-                      <span className="font-medium text-muted-foreground">Target Audience:</span>
-                      <p className="font-medium">{formData.target_audience}</p>
+
+                {/* Plan Details Sections */}
+                <div className="space-y-6">
+                  {generatedPlan.planSummary && (
+                    <div className="bg-card p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-primary">Plan Summary</h4>
+                      <p className="text-sm leading-relaxed">{generatedPlan.planSummary}</p>
+                    </div>
+                  )}
+
+                  {generatedPlan.timelineBreakdown && (
+                    <div className="bg-card p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-primary">Timeline Breakdown</h4>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.timelineBreakdown}</div>
+                    </div>
+                  )}
+
+                  {generatedPlan.marketingStrategy && (
+                    <div className="bg-card p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-primary">Marketing Strategy</h4>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.marketingStrategy}</div>
+                    </div>
+                  )}
+
+                  {generatedPlan.operationalConsiderations && (
+                    <div className="bg-card p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-primary">Operational Considerations</h4>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.operationalConsiderations}</div>
+                    </div>
+                  )}
+
+                  {generatedPlan.risksConstraints && (
+                    <div className="bg-card p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-primary">Risks & Constraints</h4>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.risksConstraints}</div>
+                    </div>
+                  )}
+
+                  {generatedPlan.keyMetrics && (
+                    <div className="bg-card p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2 text-primary">Key Metrics</h4>
+                      <div className="text-sm leading-relaxed whitespace-pre-line">{generatedPlan.keyMetrics}</div>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div>
-                <h4 className="text-lg font-semibold mb-3">Action Items</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Select the tasks you want to add to your todo list. These are specifically tailored for Sweet Wick's operations:
-                </p>
-                
-                <ScrollArea className="max-h-96 border rounded-lg">
-                  <div className="p-4 space-y-3">
-                    {generatedTasks.map((task, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors">
-                        <Checkbox
-                          checked={selectedTaskIds.has(index)}
-                          onCheckedChange={(checked) => {
-                            const newSelectedIds = new Set(selectedTaskIds);
-                            if (checked) {
-                              newSelectedIds.add(index);
-                            } else {
-                              newSelectedIds.delete(index);
-                            }
-                            setSelectedTaskIds(newSelectedIds);
-                          }}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 space-y-1">
-                          <h5 className="font-medium">{task.title}</h5>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{task.description}</p>
-                        </div>
-                      </div>
-                    ))}
+              {/* Action Items - Right Side */}
+              <div className="space-y-4">
+                <div className="bg-card border rounded-lg">
+                  <div className="p-4 border-b">
+                    <h4 className="font-semibold">Action Items</h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Select tasks to add to your todo list
+                    </p>
                   </div>
-                </ScrollArea>
-                
-                <div className="flex gap-3 mt-6">
-                  <Button variant="outline" onClick={generatePlan} disabled={isGenerating}>
-                    {isGenerating ? "Regenerating..." : "Regenerate Strategy"}
-                  </Button>
-                  <Button onClick={savePlan} className="flex-1" size="lg">
-                    Save Plan & Add {selectedTaskIds.size} Tasks to Todo
-                  </Button>
+                  
+                  <ScrollArea className="h-[600px]">
+                    <div className="p-4 space-y-3">
+                      {generatedPlan.tasks?.map((task: any, index: number) => (
+                        <div key={index} className="flex items-start space-x-3 p-3 bg-background border rounded-lg hover:bg-muted/50 transition-colors">
+                          <Checkbox
+                            checked={selectedTaskIds.has(index)}
+                            onCheckedChange={(checked) => {
+                              const newSelectedIds = new Set(selectedTaskIds);
+                              if (checked) {
+                                newSelectedIds.add(index);
+                              } else {
+                                newSelectedIds.delete(index);
+                              }
+                              setSelectedTaskIds(newSelectedIds);
+                            }}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 space-y-1">
+                            <h5 className="font-medium text-sm">{task.title}</h5>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{task.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                  
+                  <div className="p-4 border-t space-y-3">
+                    <Button variant="outline" onClick={generatePlan} disabled={isGenerating} className="w-full">
+                      {isGenerating ? "Regenerating..." : "Regenerate Strategy"}
+                    </Button>
+                    <Button onClick={savePlan} className="w-full" size="lg">
+                      Save Plan & Add {selectedTaskIds.size} Tasks
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
