@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, Star, Edit2, StarIcon, Save, Upload, X } from "lucide-react";
+import { Plus, Star, Edit2, StarIcon, Save, Upload, X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CSVImportDialog } from "./CSVImportDialog";
 
 interface IdeaItem {
   id: string;
@@ -51,6 +52,7 @@ export const IdeaTable = ({ title, tableName, ideas, onRefresh }: IdeaTableProps
   const [saving, setSaving] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const { toast } = useToast();
 
   const totalPages = Math.ceil(ideas.length / pageSize);
@@ -197,6 +199,35 @@ export const IdeaTable = ({ title, tableName, ideas, onRefresh }: IdeaTableProps
     });
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this idea?")) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      onRefresh();
+      toast({
+        title: "Success",
+        description: "Idea deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting idea:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete idea",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -211,7 +242,11 @@ export const IdeaTable = ({ title, tableName, ideas, onRefresh }: IdeaTableProps
             <Plus className="mr-2 h-4 w-4" />
             Add New Idea
           </Button>
-          <Button variant="secondary" size="sm">
+          <Button 
+            variant="secondary" 
+            size="sm"
+            onClick={() => setShowImportDialog(true)}
+          >
             <Upload className="mr-2 h-4 w-4" />
             Import CSV
           </Button>
@@ -381,6 +416,15 @@ export const IdeaTable = ({ title, tableName, ideas, onRefresh }: IdeaTableProps
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleDelete(idea.id)}
+                            disabled={saving}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setEditingId(null)}
                             className="h-8 w-8 p-0"
                           >
@@ -473,6 +517,13 @@ export const IdeaTable = ({ title, tableName, ideas, onRefresh }: IdeaTableProps
           )}
         </div>
       )}
+
+      <CSVImportDialog
+        isOpen={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        tableName={tableName}
+        onImportComplete={onRefresh}
+      />
     </div>
   );
 };
