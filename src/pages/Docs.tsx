@@ -198,19 +198,34 @@ export default function Docs() {
     .replace(/>/g, "&gt;");
 
   const textToHtml = (text: string) => {
-    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    const lines = text.split('\n');
     let html = "";
     let inList = false;
+    let currentParagraph = "";
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const nextLine = lines[i + 1];
+      const line = lines[i].trim();
+      const nextLine = lines[i + 1]?.trim() || "";
+      
+      // Skip empty lines but use them to break paragraphs
+      if (!line) {
+        if (currentParagraph) {
+          html += `<p>${escapeHtml(currentParagraph.trim())}</p>`;
+          currentParagraph = "";
+        }
+        continue;
+      }
       
       // Check if this is a bullet point or numbered item
       const isBullet = /^[•▪▫‣⁃-]\s/.test(line) || /^\d+\.\s/.test(line) || /^[a-zA-Z]\.\s/.test(line);
-      const nextIsBullet = nextLine && (/^[•▪▫‣⁃-]\s/.test(nextLine) || /^\d+\.\s/.test(nextLine) || /^[a-zA-Z]\.\s/.test(nextLine));
       
       if (isBullet) {
+        // Finish any current paragraph
+        if (currentParagraph) {
+          html += `<p>${escapeHtml(currentParagraph.trim())}</p>`;
+          currentParagraph = "";
+        }
+        
         if (!inList) {
           html += "<ul>";
           inList = true;
@@ -222,16 +237,39 @@ export default function Docs() {
           inList = false;
         }
         
-        // Check if this looks like a heading (short line, next line exists, or all caps)
-        const isHeading = line.length < 60 && (nextLine || line === line.toUpperCase()) && 
-                         !line.endsWith('.') && !line.endsWith(',') && !line.endsWith(';');
+        // Check if this looks like a heading (short line, all caps, or ends with colon)
+        const isHeading = (line.length < 80 && (line === line.toUpperCase() || line.endsWith(':') || 
+                          (nextLine && !line.endsWith('.') && !line.endsWith(',') && !line.endsWith(';') && 
+                           line.length < 60))) && line.length > 3;
         
-        if (isHeading && line.length > 3) {
-          html += `<h3><strong>${escapeHtml(line)}</strong></h3>`;
+        if (isHeading) {
+          // Finish any current paragraph
+          if (currentParagraph) {
+            html += `<p>${escapeHtml(currentParagraph.trim())}</p>`;
+            currentParagraph = "";
+          }
+          html += `<h3><strong>${escapeHtml(line.replace(/:$/, ''))}</strong></h3>`;
         } else {
-          html += `<p>${escapeHtml(line)}</p>`;
+          // Add to current paragraph with proper spacing
+          if (currentParagraph) {
+            currentParagraph += " " + line;
+          } else {
+            currentParagraph = line;
+          }
+          
+          // End paragraph if line ends with punctuation and next line looks like start of new paragraph
+          if ((line.endsWith('.') || line.endsWith('!') || line.endsWith('?')) && 
+              (nextLine === "" || nextLine.match(/^[A-Z]/) || !nextLine)) {
+            html += `<p>${escapeHtml(currentParagraph.trim())}</p>`;
+            currentParagraph = "";
+          }
         }
       }
+    }
+    
+    // Add any remaining paragraph
+    if (currentParagraph) {
+      html += `<p>${escapeHtml(currentParagraph.trim())}</p>`;
     }
     
     if (inList) {
