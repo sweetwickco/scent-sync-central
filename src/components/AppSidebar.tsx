@@ -9,7 +9,7 @@ import {
   Cog,
   FileText 
 } from "lucide-react";
-import { NavLink, useSearchParams } from "react-router-dom";
+import { NavLink, useSearchParams, useNavigate } from "react-router-dom";
 
 import {
   Sidebar,
@@ -39,11 +39,12 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const activeTab = searchParams.get('tab') || 'inventory';
 
   const handleNavigation = (value: string) => {
     if (value === 'docs') {
-      window.location.href = '/docs';
+      navigate('/docs');
     } else if (value === 'inventory') {
       setSearchParams({});
     } else {
