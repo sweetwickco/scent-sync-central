@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
+import { ArrowLeft, Plus, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -38,6 +39,7 @@ export default function DocEditor() {
   const [tabs, setTabs] = useState<DocTab[]>([]);
   const [activeTab, setActiveTab] = useState<DocTab | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -272,6 +274,46 @@ export default function DocEditor() {
     }
   };
 
+  const handleDeleteDocument = async () => {
+    if (!document) return;
+
+    try {
+      // Delete document tabs first (due to foreign key constraint)
+      const { error: tabsError } = await supabase
+        .from('document_tabs')
+        .delete()
+        .eq('document_id', document.id);
+
+      if (tabsError) throw tabsError;
+
+      // Delete the document
+      const { error: docError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', document.id);
+
+      if (docError) throw docError;
+
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      });
+
+      // Navigate back to docs list
+      navigate('/docs');
+
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive",
+      });
+    }
+
+    setDeleteDialog(false);
+  };
+
   const addNewTab = async () => {
     if (!document) return;
 
@@ -432,17 +474,27 @@ export default function DocEditor() {
               <div className="flex-1 flex flex-col">
                 {/* Document Header */}
                 <div className="border-b border-border p-4">
-                  <Input
-                    value={document?.title || ''}
-                    onChange={(e) => {
-                      if (document) {
-                        setDocument({ ...document, title: e.target.value });
-                      }
-                    }}
-                    onBlur={(e) => saveDocumentTitle(e.target.value)}
-                    className="text-lg font-semibold border-0 bg-transparent p-0 focus-visible:ring-0"
-                    placeholder="Document title"
-                  />
+                  <div className="flex items-center justify-between gap-4">
+                    <Input
+                      value={document?.title || ''}
+                      onChange={(e) => {
+                        if (document) {
+                          setDocument({ ...document, title: e.target.value });
+                        }
+                      }}
+                      onBlur={(e) => saveDocumentTitle(e.target.value)}
+                      className="text-lg font-semibold border-0 bg-transparent p-0 focus-visible:ring-0 flex-1"
+                      placeholder="Document title"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteDialog(true)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Toolbar */}
@@ -528,6 +580,27 @@ export default function DocEditor() {
             </div>
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Document</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{document?.title}"? This action cannot be undone and will also delete all tabs within this document.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteDocument}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </SidebarProvider>
   );

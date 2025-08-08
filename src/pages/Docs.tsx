@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, FileText, Clock } from "lucide-react";
+import { Plus, FileText, Clock, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,6 +22,11 @@ export default function Docs() {
   const { toast } = useToast();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; docId: string; docTitle: string }>({
+    open: false,
+    docId: '',
+    docTitle: ''
+  });
 
   useEffect(() => {
     loadDocs();
@@ -68,6 +74,49 @@ export default function Docs() {
     if (diffDays === 1) return '1 day ago';
     if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
+  };
+
+  const handleDeleteDoc = async (docId: string) => {
+    try {
+      // Delete document tabs first (due to foreign key constraint)
+      const { error: tabsError } = await supabase
+        .from('document_tabs')
+        .delete()
+        .eq('document_id', docId);
+
+      if (tabsError) throw tabsError;
+
+      // Delete the document
+      const { error: docError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', docId);
+
+      if (docError) throw docError;
+
+      // Update local state
+      setDocs(docs.filter(doc => doc.id !== docId));
+      
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      });
+
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive",
+      });
+    }
+
+    setDeleteDialog({ open: false, docId: '', docTitle: '' });
+  };
+
+  const confirmDelete = (docId: string, docTitle: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent opening the document
+    setDeleteDialog({ open: true, docId, docTitle });
   };
 
   if (loading) {
@@ -132,7 +181,7 @@ export default function Docs() {
                 {docs.map((doc) => (
                   <Card 
                     key={doc.id}
-                    className="h-64 cursor-pointer hover:shadow-lg transition-shadow group"
+                    className="h-64 cursor-pointer hover:shadow-lg transition-shadow group relative"
                     onClick={() => handleOpenDoc(doc.id)}
                   >
                     <CardHeader className="pb-3">
@@ -144,13 +193,25 @@ export default function Docs() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex flex-col h-full">
                       <CardTitle className="text-base mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                         {doc.title}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground line-clamp-3">
+                      <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
                         Click to open and edit this document
                       </p>
+                      
+                      {/* Delete button at bottom */}
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => confirmDelete(doc.id, doc.title, e)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -159,6 +220,27 @@ export default function Docs() {
           </main>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteDialog.docTitle}"? This action cannot be undone and will also delete all tabs within this document.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleDeleteDoc(deleteDialog.docId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }
