@@ -13,6 +13,7 @@ import AddListing from "./pages/AddListing";
 import NotFound from "./pages/NotFound";
 import Docs from "./pages/Docs";
 import DocEditor from "./pages/DocEditor";
+import EtsyCallback from "./pages/EtsyCallback";
 import { OptimizeListing } from "@/components/OptimizeListing";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/add-listing" element={<ProtectedRoute><AddListing /></ProtectedRoute>} />
               <Route path="/optimize-listing" element={<ProtectedRoute><OptimizeListing /></ProtectedRoute>} />
               <Route path="/optimize-listing/:optimizationId" element={<ProtectedRoute><OptimizeListing /></ProtectedRoute>} />
+              <Route path="/etsy-callback" element={<EtsyCallback />} />
               <Route path="/docs" element={<ProtectedRoute><Docs /></ProtectedRoute>} />
               <Route path="/docs/:docId" element={<ProtectedRoute><DocEditor /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />

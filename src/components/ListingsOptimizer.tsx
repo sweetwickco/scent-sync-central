@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { EtsyConnection } from "@/components/EtsyConnection";
 
 interface ListingOptimization {
   id: string;
@@ -134,6 +135,8 @@ export const ListingsOptimizer = () => {
           Optimize Listing
         </Button>
       </div>
+
+      <EtsyConnection />
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
