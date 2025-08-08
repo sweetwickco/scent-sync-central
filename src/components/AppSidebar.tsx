@@ -9,7 +9,7 @@ import {
   Cog,
   FileText 
 } from "lucide-react";
-import { NavLink, useSearchParams, useNavigate } from "react-router-dom";
+import { NavLink, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 
 import {
   Sidebar,
@@ -40,20 +40,30 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const activeTab = searchParams.get('tab') || 'inventory';
 
   const handleNavigation = (value: string) => {
     if (value === 'docs') {
       navigate('/docs');
     } else if (value === 'inventory') {
-      setSearchParams({});
+      navigate('/');
     } else {
-      setSearchParams({ tab: value });
+      navigate(`/?tab=${value}`);
     }
   };
 
+  // Determine which item should be active based on current route
+  const getActiveValue = () => {
+    if (location.pathname.startsWith('/docs')) {
+      return 'docs';
+    }
+    return activeTab;
+  };
+
   const getNavClassName = (value: string) => {
-    const isActive = activeTab === value;
+    const currentActive = getActiveValue();
+    const isActive = currentActive === value;
     return isActive 
       ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" 
       : "text-muted-foreground hover:text-foreground hover:bg-muted/50";
