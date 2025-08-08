@@ -49,24 +49,26 @@ export function AppSidebar() {
 
   const getNavClassName = (value: string) => {
     const isActive = activeTab === value;
-    return isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50";
+    return isActive 
+      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" 
+      : "text-muted-foreground hover:text-foreground hover:bg-muted/50";
   };
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-60"}>
-      <SidebarContent>
+    <Sidebar className={`transition-all duration-300 ${collapsed ? "w-14" : "w-60"} bg-background border-r border-border`}>
+      <SidebarContent className="bg-background">
         <SidebarGroup>
-          <SidebarGroupLabel>Business Tools</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-foreground/70">Business Tools</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton 
-                    className={getNavClassName(item.value)}
+                    className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale`}
                     onClick={() => handleNavigation(item.value)}
                   >
                     <item.icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.title}</span>}
+                    {!collapsed && <span className="animate-fade-in">{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
