@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { AppSidebar } from "@/components/AppSidebar";
 import { InventoryDashboard } from "@/components/InventoryDashboard";
 import { InventoryTable, FragranceItem } from "@/components/InventoryTable";
 import { FragranceForm } from "@/components/FragranceForm";
@@ -11,7 +12,7 @@ import { Planning } from "@/components/Planning";
 import { Supplies } from "@/components/Supplies";
 import { Products } from "@/components/Products";
 import { Production } from "@/components/Production";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -26,12 +27,53 @@ const Index = () => {
   // Get active tab from URL params, default to "inventory"
   const activeTab = searchParams.get('tab') || 'inventory';
 
-  // Update URL when tab changes
-  const handleTabChange = (value: string) => {
-    if (value === 'inventory') {
-      setSearchParams({});
-    } else {
-      setSearchParams({ tab: value });
+  // Render current view based on active tab
+  const renderCurrentView = () => {
+    switch (activeTab) {
+      case 'inventory':
+        return (
+          <div className="space-y-8">
+            <InventoryDashboard 
+              stats={dashboardStats}
+              onAddFragrance={handleAddFragrance}
+              onSyncNow={handleSyncNow}
+            />
+            <InventoryTable 
+              items={inventory}
+              onEditItem={handleEditItem}
+              onUpdateStock={handleUpdateStock}
+            />
+          </div>
+        );
+      case 'listings':
+        return <ListingsManagement fragrances={inventory} />;
+      case 'listings-optimizer':
+        return <ListingsOptimizer />;
+      case 'design-ideas':
+        return <DesignIdeas />;
+      case 'planning':
+        return <Planning />;
+      case 'supplies':
+        return <Supplies />;
+      case 'products':
+        return <Products />;
+      case 'production':
+        return <Production />;
+      default:
+        return (
+          <div className="space-y-8">
+            <InventoryDashboard 
+              stats={dashboardStats}
+              onAddFragrance={handleAddFragrance}
+              onSyncNow={handleSyncNow}
+            />
+            <InventoryTable 
+              items={inventory}
+              onEditItem={handleEditItem}
+              onUpdateStock={handleUpdateStock}
+            />
+          </div>
+        );
     }
   };
 
@@ -131,64 +173,23 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="container mx-auto p-6">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="listings">Listings</TabsTrigger>
-            <TabsTrigger value="listings-optimizer">Optimizer</TabsTrigger>
-            <TabsTrigger value="design-ideas">Ideas</TabsTrigger>
-            <TabsTrigger value="planning">Planning</TabsTrigger>
-            <TabsTrigger value="supplies">Supplies</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="production">Production</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="inventory" className="space-y-8">
-            <InventoryDashboard 
-              stats={dashboardStats}
-              onAddFragrance={handleAddFragrance}
-              onSyncNow={handleSyncNow}
-            />
-            
-            <InventoryTable 
-              items={inventory}
-              onEditItem={handleEditItem}
-              onUpdateStock={handleUpdateStock}
-            />
-          </TabsContent>
-          
-          <TabsContent value="listings">
-            <ListingsManagement fragrances={inventory} />
-          </TabsContent>
-          
-          <TabsContent value="listings-optimizer">
-            <ListingsOptimizer />
-          </TabsContent>
-          
-          <TabsContent value="design-ideas">
-            <DesignIdeas />
-          </TabsContent>
-          
-          <TabsContent value="planning">
-            <Planning />
-          </TabsContent>
-          
-          <TabsContent value="supplies">
-            <Supplies />
-          </TabsContent>
-          
-          <TabsContent value="products">
-            <Products />
-          </TabsContent>
-          
-          <TabsContent value="production">
-            <Production />
-          </TabsContent>
-        </Tabs>
-
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col">
+          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center justify-between px-6 py-4">
+              <SidebarTrigger />
+              <div className="flex items-center gap-2">
+                <Header />
+              </div>
+            </div>
+          </div>
+          <main className="flex-1 p-6">
+            {renderCurrentView()}
+          </main>
+        </div>
+        
         <FragranceForm
           isOpen={isFormOpen}
           onClose={() => setIsFormOpen(false)}
@@ -197,7 +198,7 @@ const Index = () => {
           editingItem={editingItem}
         />
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
