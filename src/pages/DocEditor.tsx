@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Trash2, Edit, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +40,13 @@ export default function DocEditor() {
   const [activeTab, setActiveTab] = useState<DocTab | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteTabDialog, setDeleteTabDialog] = useState<{ open: boolean; tabId: string; tabTitle: string }>({
+    open: false,
+    tabId: '',
+    tabTitle: ''
+  });
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingTabTitle, setEditingTabTitle] = useState('');
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isUpdatingContentRef = useRef(false);
 
@@ -295,6 +302,107 @@ export default function DocEditor() {
     }
   };
 
+  const handleDeleteTab = async (tabId: string) => {
+    if (tabs.length <= 1) {
+      toast({
+        title: "Cannot Delete",
+        description: "Cannot delete the last remaining tab",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('document_tabs')
+        .delete()
+        .eq('id', tabId);
+
+      if (error) throw error;
+
+      const updatedTabs = tabs.filter(tab => tab.id !== tabId);
+      setTabs(updatedTabs);
+
+      // If we deleted the active tab, switch to the first remaining tab
+      if (activeTab?.id === tabId) {
+        const newActiveTab = updatedTabs[0];
+        if (newActiveTab) {
+          await handleTabClick(newActiveTab);
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "Tab deleted successfully",
+      });
+
+    } catch (error) {
+      console.error('Error deleting tab:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete tab",
+        variant: "destructive",
+      });
+    }
+
+    setDeleteTabDialog({ open: false, tabId: '', tabTitle: '' });
+  };
+
+  const startEditingTab = (tab: DocTab, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setEditingTabId(tab.id);
+    setEditingTabTitle(tab.title);
+  };
+
+  const saveTabTitle = async () => {
+    if (!editingTabId || !editingTabTitle.trim()) {
+      setEditingTabId(null);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('document_tabs')
+        .update({ title: editingTabTitle.trim() })
+        .eq('id', editingTabId);
+
+      if (error) throw error;
+
+      setTabs(tabs.map(tab => 
+        tab.id === editingTabId ? { ...tab, title: editingTabTitle.trim() } : tab
+      ));
+
+      if (activeTab?.id === editingTabId) {
+        setActiveTab({ ...activeTab, title: editingTabTitle.trim() });
+      }
+
+      toast({
+        title: "Success",
+        description: "Tab renamed successfully",
+      });
+
+    } catch (error) {
+      console.error('Error saving tab title:', error);
+      toast({
+        title: "Error",
+        description: "Failed to rename tab",
+        variant: "destructive",
+      });
+    }
+
+    setEditingTabId(null);
+  };
+
+  const cancelEditingTab = () => {
+    setEditingTabId(null);
+    setEditingTabTitle('');
+  };
+
+  const confirmDeleteTab = (tabId: string, tabTitle: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDeleteTabDialog({ open: true, tabId, tabTitle });
+  };
+
   const handleDeleteDocument = async () => {
     if (!document) return;
 
@@ -477,15 +585,71 @@ export default function DocEditor() {
 
                   <div className="space-y-1">
                     {tabs.map((tab) => (
-                      <Button
+                      <div
                         key={tab.id}
-                        variant={tab.isActive ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => handleTabClick(tab)}
-                        className="w-full justify-start text-left text-xs h-auto py-2 px-3"
+                        className="group relative"
                       >
-                        <div className="truncate">{tab.title}</div>
-                      </Button>
+                        {editingTabId === tab.id ? (
+                          <div className="flex items-center gap-2 px-3 py-2">
+                            <Input
+                              value={editingTabTitle}
+                              onChange={(e) => setEditingTabTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveTabTitle();
+                                } else if (e.key === 'Escape') {
+                                  cancelEditingTab();
+                                }
+                              }}
+                              className="text-xs h-6 flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={saveTabTitle}
+                              className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                            >
+                              <Check className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={cancelEditingTab}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant={tab.isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            onClick={() => handleTabClick(tab)}
+                            className="w-full justify-between text-left text-xs h-auto py-2 px-3 relative group"
+                          >
+                            <div className="truncate flex-1">{tab.title}</div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => startEditingTab(tab, e)}
+                                className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => confirmDeleteTab(tab.id, tab.title, e)}
+                                className="h-5 w-5 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </Button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -602,7 +766,7 @@ export default function DocEditor() {
           </div>
         </div>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Document Confirmation Dialog */}
         <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -618,6 +782,27 @@ export default function DocEditor() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Tab Confirmation Dialog */}
+        <AlertDialog open={deleteTabDialog.open} onOpenChange={(open) => setDeleteTabDialog({ ...deleteTabDialog, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Tab</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the tab "{deleteTabDialog.tabTitle}"? This action cannot be undone and will permanently delete all content in this tab.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDeleteTab(deleteTabDialog.tabId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Tab
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
