@@ -34,7 +34,7 @@ export default function Docs() {
     loadDocs();
     // Configure PDF.js worker
     // @ts-ignore - pdfjsLib types may not include GlobalWorkerOptions in this build
-    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js";
+    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs";
   }, []);
 
   const loadDocs = async () => {
@@ -207,7 +207,8 @@ export default function Docs() {
 
     } catch (error) {
       console.error('Import error:', error);
-      toast({ title: "Error", description: "Failed to import PDF(s)", variant: "destructive" });
+      const message = error instanceof Error ? error.message : 'Failed to import PDF(s)';
+      toast({ title: "Error", description: message, variant: "destructive" });
     }
   };
   if (loading) {
