@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, FileText, Clock, Trash2 } from "lucide-react";
+import { Plus, FileText, Clock, Trash2, FileUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import * as pdfjsLib from "pdfjs-dist";
 
 interface Doc {
   id: string;
@@ -27,9 +28,13 @@ export default function Docs() {
     docId: '',
     docTitle: ''
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadDocs();
+    // Configure PDF.js worker
+    // @ts-ignore - pdfjsLib types may not include GlobalWorkerOptions in this build
+    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js";
   }, []);
 
   const loadDocs = async () => {
@@ -119,6 +124,92 @@ export default function Docs() {
     setDeleteDialog({ open: true, docId, docTitle });
   };
 
+  // Import PDFs
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const onFilesSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    await importPdfFiles(files);
+    // reset input to allow re-selecting same file
+    e.target.value = "";
+  };
+
+  const extractTextFromPdf = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = (pdfjsLib as any).getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
+    let text = "";
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const content = await page.getTextContent();
+      const pageText = content.items.map((it: any) => it.str).join(" ");
+      text += pageText + "\n\n";
+    }
+    return text;
+  };
+
+  const escapeHtml = (s: string) => s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const textToHtml = (text: string) =>
+    text
+      .split(/\n{2,}/)
+      .map(p => `<p>${escapeHtml(p.trim())}</p>`) 
+      .join("");
+
+  const importPdfFiles = async (files: FileList) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Not signed in", description: "Please log in to import.", variant: "destructive" });
+        return;
+      }
+
+      let firstDocId: string | null = null;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        toast({ title: "Importing", description: `Reading ${file.name}...` });
+        const text = await extractTextFromPdf(file);
+        const html = textToHtml(text);
+        const title = file.name.replace(/\.[^/.]+$/, "");
+
+        const { data: newDoc, error: docError } = await supabase
+          .from('documents')
+          .insert({ user_id: user.id, title, content: '' })
+          .select()
+          .single();
+
+        if (docError) throw docError;
+
+        const { error: tabError } = await supabase
+          .from('document_tabs')
+          .insert({
+            document_id: newDoc.id,
+            title: 'Main',
+            content: html,
+            order_index: 0,
+            is_active: true,
+          });
+
+        if (tabError) throw tabError;
+
+        if (!firstDocId) firstDocId = newDoc.id;
+      }
+
+      toast({ title: "Import complete", description: `Imported ${files.length} PDF${files.length > 1 ? 's' : ''}` });
+      await loadDocs();
+      if (firstDocId) navigate(`/docs/${firstDocId}`);
+
+    } catch (error) {
+      console.error('Import error:', error);
+      toast({ title: "Error", description: "Failed to import PDF(s)", variant: "destructive" });
+    }
+  };
   if (loading) {
     return (
       <SidebarProvider>
@@ -157,9 +248,24 @@ export default function Docs() {
           </div>
           <main className="flex-1 p-6">
             <div className="container mx-auto">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">Documents</h1>
-                <p className="text-muted-foreground">Create and manage your business documents</p>
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground mb-2">Documents</h1>
+                  <p className="text-muted-foreground">Create and manage your business documents</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" onClick={handleImportClick} className="gap-2">
+                    <FileUp className="w-4 h-4" /> Import PDF
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    multiple
+                    onChange={onFilesSelected}
+                    className="hidden"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
