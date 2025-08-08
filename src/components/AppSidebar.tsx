@@ -42,7 +42,9 @@ export function AppSidebar() {
   const activeTab = searchParams.get('tab') || 'inventory';
 
   const handleNavigation = (value: string) => {
-    if (value === 'inventory') {
+    if (value === 'docs') {
+      window.location.href = '/docs';
+    } else if (value === 'inventory') {
       setSearchParams({});
     } else {
       setSearchParams({ tab: value });
