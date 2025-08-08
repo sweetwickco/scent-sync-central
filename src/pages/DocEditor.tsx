@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,19 @@ export default function DocEditor() {
   const [activeTab, setActiveTab] = useState<DocTab | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isUpdatingContentRef = useRef(false);
+
+  // Debounced save function
+  const debouncedSave = useCallback((tabId: string, content: string) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveTabContent(tabId, content);
+    }, 1000); // Save after 1 second of no typing
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -57,8 +70,9 @@ export default function DocEditor() {
       },
     },
     onUpdate: ({ editor }) => {
-      if (activeTab) {
-        saveTabContent(activeTab.id, editor.getHTML());
+      if (activeTab && !isUpdatingContentRef.current) {
+        const content = editor.getHTML();
+        debouncedSave(activeTab.id, content);
       }
     },
   });
@@ -71,7 +85,12 @@ export default function DocEditor() {
   // Update editor content when active tab changes
   useEffect(() => {
     if (editor && activeTab) {
+      isUpdatingContentRef.current = true;
       editor.commands.setContent(activeTab.content);
+      // Allow a brief moment for the content to be set before enabling auto-save again
+      setTimeout(() => {
+        isUpdatingContentRef.current = false;
+      }, 100);
     }
   }, [activeTab, editor]);
 
@@ -225,23 +244,25 @@ export default function DocEditor() {
 
       if (error) throw error;
 
-      // Update local state
-      setTabs(tabs.map(tab => 
+      // Update local state without triggering re-renders
+      setTabs(prevTabs => prevTabs.map(tab => 
         tab.id === tabId ? { ...tab, content } : tab
       ));
       
       if (activeTab?.id === tabId) {
-        setActiveTab({ ...activeTab, content });
+        setActiveTab(prevTab => prevTab ? { ...prevTab, content } : null);
       }
     } catch (error) {
       console.error('Error saving content:', error);
+      // Don't show toast for auto-save errors to avoid interrupting the user
     }
   };
 
   const handleTabClick = async (tab: DocTab) => {
     // Save current tab content before switching
-    if (activeTab && editor) {
-      await saveTabContent(activeTab.id, editor.getHTML());
+    if (activeTab && editor && !isUpdatingContentRef.current) {
+      const currentContent = editor.getHTML();
+      await saveTabContent(activeTab.id, currentContent);
     }
 
     // Update active states in database
