@@ -6,7 +6,8 @@ import {
   Calendar, 
   Wrench, 
   Box, 
-  Cog 
+  Cog,
+  FileText 
 } from "lucide-react";
 import { NavLink, useSearchParams } from "react-router-dom";
 
@@ -31,6 +32,7 @@ const navigationItems = [
   { title: "Supplies", value: "supplies", icon: Wrench },
   { title: "Products", value: "products", icon: Box },
   { title: "Production", value: "production", icon: Cog },
+  { title: "Docs", value: "docs", icon: FileText },
 ];
 
 export function AppSidebar() {

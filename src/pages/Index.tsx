@@ -12,6 +12,7 @@ import { Planning } from "@/components/Planning";
 import { Supplies } from "@/components/Supplies";
 import { Products } from "@/components/Products";
 import { Production } from "@/components/Production";
+import Docs from "@/pages/Docs";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -59,6 +60,8 @@ const Index = () => {
         return <Products />;
       case 'production':
         return <Production />;
+      case 'docs':
+        return <Docs />;
       default:
         return (
           <div className="space-y-8">
