@@ -15,7 +15,7 @@ export function Header() {
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-medium">Welcome, {displayName}!</h2>
+        <h2 className="text-lg font-medium mr-8">Welcome, {displayName}!</h2>
       </div>
       
       <div className="flex items-center gap-2">
