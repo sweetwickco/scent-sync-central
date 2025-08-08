@@ -1,46 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileText, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Doc {
   id: string;
   title: string;
-  lastModified: string;
-  preview: string;
+  created_at: string;
+  updated_at: string;
 }
-
-const mockDocs: Doc[] = [
-  {
-    id: "1",
-    title: "AUGUST to do- Listings goal: 250",
-    lastModified: "2 hours ago",
-    preview: "All weeks Working on 100 designs, have my pumpkin wax melts/leaves listed by 1st week..."
-  },
-  {
-    id: "2", 
-    title: "500 CANDLES",
-    lastModified: "1 day ago",
-    preview: "Production planning for bulk candle manufacturing..."
-  },
-  {
-    id: "3",
-    title: "Christmas Box",
-    lastModified: "3 days ago", 
-    preview: "Holiday product planning and seasonal inventory..."
-  },
-  {
-    id: "4",
-    title: "Random ideas",
-    lastModified: "1 week ago",
-    preview: "Creative concepts and brainstorming notes..."
-  }
-];
 
 export default function Docs() {
   const navigate = useNavigate();
-  const [docs] = useState<Doc[]>(mockDocs);
+  const { toast } = useToast();
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDocs();
+  }, []);
+
+  const loadDocs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      setDocs(data || []);
+    } catch (error) {
+      console.error('Error loading docs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load documents",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCreateDoc = () => {
     navigate(`/docs/new`);
@@ -49,6 +52,30 @@ export default function Docs() {
   const handleOpenDoc = (docId: string) => {
     navigate(`/docs/${docId}`);
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-6 py-8">
+          <div className="text-center">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,7 +112,7 @@ export default function Docs() {
                   <FileText className="w-8 h-8 text-primary flex-shrink-0" />
                   <div className="flex items-center text-xs text-muted-foreground">
                     <Clock className="w-3 h-3 mr-1" />
-                    {doc.lastModified}
+                    {formatDate(doc.updated_at)}
                   </div>
                 </div>
               </CardHeader>
@@ -94,7 +121,7 @@ export default function Docs() {
                   {doc.title}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground line-clamp-3">
-                  {doc.preview}
+                  Click to open and edit this document
                 </p>
               </CardContent>
             </Card>
