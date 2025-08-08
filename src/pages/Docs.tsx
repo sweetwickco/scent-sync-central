@@ -9,7 +9,8 @@ import { Header } from "@/components/Header";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import * as pdfjsLib from "pdfjs-dist";
+import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 interface Doc {
   id: string;
@@ -32,9 +33,7 @@ export default function Docs() {
 
   useEffect(() => {
     loadDocs();
-    // Configure PDF.js worker
-    // @ts-ignore - pdfjsLib types may not include GlobalWorkerOptions in this build
-    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs";
+    GlobalWorkerOptions.workerSrc = pdfWorker;
   }, []);
 
   const loadDocs = async () => {
@@ -137,7 +136,7 @@ export default function Docs() {
 
   const extractTextFromPdf = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = (pdfjsLib as any).getDocument({ data: arrayBuffer });
+    const loadingTask = getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
     let text = "";
 
