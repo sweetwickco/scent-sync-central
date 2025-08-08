@@ -143,8 +143,51 @@ export default function Docs() {
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const content = await page.getTextContent();
-      const pageText = content.items.map((it: any) => it.str).join(" ");
-      text += pageText + "\n\n";
+      
+      // Get text items with position information
+      const textItems = content.items.map((item: any) => ({
+        str: item.str,
+        x: item.transform[4],
+        y: item.transform[5],
+        width: item.width,
+        height: item.height
+      }));
+
+      // Sort by y-position (top to bottom), then x-position (left to right)
+      textItems.sort((a, b) => {
+        const yDiff = Math.abs(a.y - b.y);
+        if (yDiff > 5) return b.y - a.y; // Different lines
+        return a.x - b.x; // Same line, left to right
+      });
+
+      let pageText = "";
+      let lastY = textItems[0]?.y || 0;
+      let lineText = "";
+
+      for (const item of textItems) {
+        const yDiff = Math.abs(item.y - lastY);
+        
+        if (yDiff > 5) { // New line
+          if (lineText.trim()) {
+            pageText += lineText.trim() + "\n";
+          }
+          lineText = item.str;
+          lastY = item.y;
+        } else {
+          // Same line - add space if needed
+          if (lineText && !lineText.endsWith(' ') && !item.str.startsWith(' ')) {
+            lineText += ' ';
+          }
+          lineText += item.str;
+        }
+      }
+      
+      // Add the last line
+      if (lineText.trim()) {
+        pageText += lineText.trim() + "\n";
+      }
+      
+      text += pageText + "\n";
     }
     return text;
   };
@@ -154,11 +197,49 @@ export default function Docs() {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  const textToHtml = (text: string) =>
-    text
-      .split(/\n{2,}/)
-      .map(p => `<p>${escapeHtml(p.trim())}</p>`) 
-      .join("");
+  const textToHtml = (text: string) => {
+    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    let html = "";
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const nextLine = lines[i + 1];
+      
+      // Check if this is a bullet point or numbered item
+      const isBullet = /^[•▪▫‣⁃-]\s/.test(line) || /^\d+\.\s/.test(line) || /^[a-zA-Z]\.\s/.test(line);
+      const nextIsBullet = nextLine && (/^[•▪▫‣⁃-]\s/.test(nextLine) || /^\d+\.\s/.test(nextLine) || /^[a-zA-Z]\.\s/.test(nextLine));
+      
+      if (isBullet) {
+        if (!inList) {
+          html += "<ul>";
+          inList = true;
+        }
+        html += `<li>${escapeHtml(line.replace(/^[•▪▫‣⁃-]\s|^\d+\.\s|^[a-zA-Z]\.\s/, ''))}</li>`;
+      } else {
+        if (inList) {
+          html += "</ul>";
+          inList = false;
+        }
+        
+        // Check if this looks like a heading (short line, next line exists, or all caps)
+        const isHeading = line.length < 60 && (nextLine || line === line.toUpperCase()) && 
+                         !line.endsWith('.') && !line.endsWith(',') && !line.endsWith(';');
+        
+        if (isHeading && line.length > 3) {
+          html += `<h3><strong>${escapeHtml(line)}</strong></h3>`;
+        } else {
+          html += `<p>${escapeHtml(line)}</p>`;
+        }
+      }
+    }
+    
+    if (inList) {
+      html += "</ul>";
+    }
+    
+    return html;
+  };
 
   const importPdfFiles = async (files: FileList) => {
     try {
