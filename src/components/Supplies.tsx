@@ -344,7 +344,7 @@ export const Supplies = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="supply-vendor">Vendor (Optional)</Label>
+                  <Label htmlFor="supply-vendor">Vendor</Label>
                   <Input
                     id="supply-vendor"
                     value={supplyForm.vendor}
@@ -354,7 +354,7 @@ export const Supplies = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="supply-link">Link (Optional)</Label>
+                  <Label htmlFor="supply-link">Link</Label>
                   <Input
                     id="supply-link"
                     type="url"
@@ -408,7 +408,7 @@ export const Supplies = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
+                  <Label htmlFor="supply-price">Total Price</Label>
                   <Input
                     id="supply-price"
                     type="number"
