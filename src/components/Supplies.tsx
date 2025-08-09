@@ -326,18 +326,40 @@ export const Supplies = () => {
               </DialogHeader>
               
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="supply-name">Supply Name</Label>
+                  <Input
+                    id="supply-name"
+                    value={supplyForm.name}
+                    onChange={(e) => setSupplyForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Soy Wax"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="supply-vendor">Vendor (Optional)</Label>
+                  <Input
+                    id="supply-vendor"
+                    value={supplyForm.vendor}
+                    onChange={(e) => setSupplyForm(prev => ({ ...prev, vendor: e.target.value }))}
+                    placeholder="e.g., ABC Supplies"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="supply-link">Link (Optional)</Label>
+                  <Input
+                    id="supply-link"
+                    type="url"
+                    value={supplyForm.link}
+                    onChange={(e) => setSupplyForm(prev => ({ ...prev, link: e.target.value }))}
+                    placeholder="https://example.com/product"
+                  />
+                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="supply-name">Supply Name</Label>
-                    <Input
-                      id="supply-name"
-                      value={supplyForm.name}
-                      onChange={(e) => setSupplyForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., Soy Wax"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="supply-unit">Unit</Label>
+                    <Label htmlFor="supply-unit">Unit Size</Label>
                     <Input
                       id="supply-unit"
                       value={supplyForm.unit}
@@ -345,40 +367,17 @@ export const Supplies = () => {
                       placeholder="e.g., lbs, oz, each"
                     />
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="supply-vendor">Vendor (Optional)</Label>
+                    <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
                     <Input
-                      id="supply-vendor"
-                      value={supplyForm.vendor}
-                      onChange={(e) => setSupplyForm(prev => ({ ...prev, vendor: e.target.value }))}
-                      placeholder="e.g., ABC Supplies"
+                      id="supply-price"
+                      type="number"
+                      step="0.01"
+                      value={supplyForm.price}
+                      onChange={(e) => setSupplyForm(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="0.00"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="supply-link">Link (Optional)</Label>
-                    <Input
-                      id="supply-link"
-                      type="url"
-                      value={supplyForm.link}
-                      onChange={(e) => setSupplyForm(prev => ({ ...prev, link: e.target.value }))}
-                      placeholder="https://example.com/product"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
-                  <Input
-                    id="supply-price"
-                    type="number"
-                    step="0.01"
-                    value={supplyForm.price}
-                    onChange={(e) => setSupplyForm(prev => ({ ...prev, price: e.target.value }))}
-                    placeholder="0.00"
-                  />
                 </div>
                 
                 <div>
