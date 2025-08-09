@@ -30,6 +30,8 @@ interface Supply {
   unit: string;
   unit_type?: string;
   link?: string;
+  current_quantity?: number;
+  low_threshold?: number;
   created_at: string;
 }
 
@@ -57,6 +59,8 @@ export const Supplies = () => {
     unit: '',
     unit_type: '',
     link: '',
+    current_quantity: '',
+    low_threshold: '',
     category_id: ''
   });
 
@@ -133,6 +137,8 @@ export const Supplies = () => {
         unit: supplyForm.unit.trim(),
         unit_type: supplyForm.unit_type,
         link: supplyForm.link.trim() || null,
+        current_quantity: supplyForm.current_quantity ? parseFloat(supplyForm.current_quantity) : 0,
+        low_threshold: supplyForm.low_threshold ? parseFloat(supplyForm.low_threshold) : 0,
         category_id: supplyForm.category_id,
         user_id: user?.id!
       });
@@ -163,6 +169,8 @@ export const Supplies = () => {
       unit: supply.unit,
       unit_type: supply.unit_type || '',
       link: supply.link || '',
+      current_quantity: supply.current_quantity?.toString() || '',
+      low_threshold: supply.low_threshold?.toString() || '',
       category_id: supply.category_id
     });
     setIsSupplyDialogOpen(true);
@@ -180,6 +188,8 @@ export const Supplies = () => {
         unit: supplyForm.unit.trim(),
         unit_type: supplyForm.unit_type,
         link: supplyForm.link.trim() || null,
+        current_quantity: supplyForm.current_quantity ? parseFloat(supplyForm.current_quantity) : 0,
+        low_threshold: supplyForm.low_threshold ? parseFloat(supplyForm.low_threshold) : 0,
         category_id: supplyForm.category_id
       })
       .eq('id', editingSupply.id);
@@ -231,6 +241,8 @@ export const Supplies = () => {
       unit: '',
       unit_type: '',
       link: '',
+      current_quantity: '',
+      low_threshold: '',
       category_id: ''
     });
   };
@@ -286,6 +298,17 @@ export const Supplies = () => {
       }
       return next;
     });
+  };
+
+  const getCategoryInventoryHealth = (supplies: Supply[]) => {
+    if (supplies.length === 0) return { status: 'good', count: 0 };
+    
+    const lowStockCount = supplies.filter(supply => 
+      (supply.current_quantity || 0) <= (supply.low_threshold || 0) && (supply.low_threshold || 0) > 0
+    ).length;
+    
+    if (lowStockCount === 0) return { status: 'good', count: 0 };
+    return { status: 'needs-attention', count: lowStockCount };
   };
 
   return (
@@ -433,6 +456,31 @@ export const Supplies = () => {
                   />
                 </div>
                 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="supply-current-quantity">Current Quantity</Label>
+                    <Input
+                      id="supply-current-quantity"
+                      type="number"
+                      step="0.01"
+                      value={supplyForm.current_quantity}
+                      onChange={(e) => setSupplyForm(prev => ({ ...prev, current_quantity: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="supply-low-threshold">Low Threshold</Label>
+                    <Input
+                      id="supply-low-threshold"
+                      type="number"
+                      step="0.01"
+                      value={supplyForm.low_threshold}
+                      onChange={(e) => setSupplyForm(prev => ({ ...prev, low_threshold: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                
                 <div>
                   <Label htmlFor="supply-category">Category</Label>
                   <select
@@ -465,6 +513,7 @@ export const Supplies = () => {
       <div className="grid gap-6">
         {categories.map((category) => {
           const isCollapsed = collapsedCategories.has(category.id);
+          const inventoryHealth = getCategoryInventoryHealth(category.supplies);
           return (
             <Card key={category.id}>
               <Collapsible>
@@ -477,7 +526,19 @@ export const Supplies = () => {
                       <div className="flex items-center gap-2">
                         <Package className="h-5 w-5" />
                         <div>
-                          <CardTitle className="text-left">{category.name}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-left">{category.name}</CardTitle>
+                            {inventoryHealth.status === 'needs-attention' && (
+                              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                {inventoryHealth.count} low stock
+                              </Badge>
+                            )}
+                            {inventoryHealth.status === 'good' && category.supplies.length > 0 && (
+                              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                                stock good
+                              </Badge>
+                            )}
+                          </div>
                           <CardDescription className="text-left">
                             {category.supplies.length} supplies in this category
                           </CardDescription>
@@ -576,9 +637,17 @@ export const Supplies = () => {
                                 </div>
                               )}
                               
-                              {!supply.price && (
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
+                                {(supply.current_quantity || 0) <= (supply.low_threshold || 0) && (supply.low_threshold || 0) > 0 && (
+                                  <Badge variant="destructive" className="text-xs">Low Stock</Badge>
+                                )}
+                              </div>
+                              
+                              {(supply.current_quantity !== undefined || supply.low_threshold !== undefined) && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="text-muted-foreground">Stock:</span>
+                                  <span>{supply.current_quantity || 0} / {supply.low_threshold || 0} threshold</span>
                                 </div>
                               )}
                               
@@ -587,7 +656,6 @@ export const Supplies = () => {
                                   <DollarSign className="h-3 w-3 text-muted-foreground" />
                                   <span className="text-muted-foreground">Price:</span>
                                   <span>${supply.price.toFixed(2)}</span>
-                                  <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
                                 </div>
                               )}
                             </div>

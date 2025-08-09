@@ -629,8 +629,10 @@ export type Database = {
         Row: {
           category_id: string
           created_at: string
+          current_quantity: number | null
           id: string
           link: string | null
+          low_threshold: number | null
           name: string
           price: number | null
           unit: string
@@ -642,8 +644,10 @@ export type Database = {
         Insert: {
           category_id: string
           created_at?: string
+          current_quantity?: number | null
           id?: string
           link?: string | null
+          low_threshold?: number | null
           name: string
           price?: number | null
           unit: string
@@ -655,8 +659,10 @@ export type Database = {
         Update: {
           category_id?: string
           created_at?: string
+          current_quantity?: number | null
           id?: string
           link?: string | null
+          low_threshold?: number | null
           name?: string
           price?: number | null
           unit?: string
