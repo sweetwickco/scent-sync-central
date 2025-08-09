@@ -106,20 +106,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={`transition-all duration-300 ${collapsed ? "w-14" : "w-60"} bg-background border-r border-border`}>
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-background space-y-1">
         {navigationCategories.map((category) => (
-          <SidebarGroup key={category.label}>
-            <SidebarGroupLabel className="text-foreground/70">{category.label}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
+          <SidebarGroup key={category.label} className="py-1">
+            <SidebarGroupLabel className="text-foreground/70 text-xs px-3 py-1">{category.label}</SidebarGroupLabel>
+            <SidebarGroupContent className="space-y-0">
+              <SidebarMenu className="space-y-0">
                 {category.items.map((item) => (
                   <SidebarMenuItem key={item.value}>
                     <SidebarMenuButton 
-                      className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale`}
+                      className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale h-8 px-3`}
                       onClick={() => handleNavigation(item.value)}
                     >
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span className="animate-fade-in">{item.title}</span>}
+                      {!collapsed && <span className="animate-fade-in text-sm">{item.title}</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
