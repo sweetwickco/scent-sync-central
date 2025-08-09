@@ -12,9 +12,11 @@ import {
   ShoppingBag,
   Users,
   Zap,
-  Megaphone
+  Megaphone,
+  ChevronRight
 } from "lucide-react";
 import { NavLink, useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import {
   Sidebar,
@@ -77,6 +79,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = searchParams.get('tab') || 'inventory';
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const handleNavigation = (value: string) => {
     if (value === 'docs') {
@@ -96,6 +99,27 @@ export function AppSidebar() {
     return activeTab;
   };
 
+  // Find which category contains the active tab
+  const getActiveCategoryLabel = () => {
+    const currentActive = getActiveValue();
+    const activeCategory = navigationCategories.find(category =>
+      category.items.some(item => item.value === currentActive)
+    );
+    return activeCategory?.label || null;
+  };
+
+  // Initialize open category based on active tab
+  useEffect(() => {
+    const activeCategoryLabel = getActiveCategoryLabel();
+    if (activeCategoryLabel && openCategory === null) {
+      setOpenCategory(activeCategoryLabel);
+    }
+  }, [activeTab, location.pathname]);
+
+  const handleCategoryClick = (categoryLabel: string) => {
+    setOpenCategory(openCategory === categoryLabel ? null : categoryLabel);
+  };
+
   const getNavClassName = (value: string) => {
     const currentActive = getActiveValue();
     const isActive = currentActive === value;
@@ -107,26 +131,41 @@ export function AppSidebar() {
   return (
     <Sidebar className={`transition-all duration-300 ${collapsed ? "w-14" : "w-60"} bg-background border-r border-border`}>
       <SidebarContent className="bg-background space-y-1">
-        {navigationCategories.map((category) => (
-          <SidebarGroup key={category.label} className="py-1">
-            <SidebarGroupLabel className="text-foreground/70 text-xs px-3 py-1">{category.label}</SidebarGroupLabel>
-            <SidebarGroupContent className="space-y-0">
-              <SidebarMenu className="space-y-0">
-                {category.items.map((item) => (
-                  <SidebarMenuItem key={item.value}>
-                    <SidebarMenuButton 
-                      className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale h-8 px-3`}
-                      onClick={() => handleNavigation(item.value)}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span className="animate-fade-in text-sm">{item.title}</span>}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {navigationCategories.map((category) => {
+          const isOpen = openCategory === category.label;
+          return (
+            <SidebarGroup key={category.label} className="py-1">
+              <SidebarGroupLabel 
+                className="text-foreground/70 text-xs px-3 py-2 cursor-pointer hover:text-foreground transition-colors flex items-center justify-between group"
+                onClick={() => handleCategoryClick(category.label)}
+              >
+                {!collapsed && <span>{category.label}</span>}
+                {!collapsed && (
+                  <ChevronRight 
+                    className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+                  />
+                )}
+              </SidebarGroupLabel>
+              {isOpen && (
+                <SidebarGroupContent className="space-y-0">
+                  <SidebarMenu className="space-y-0">
+                    {category.items.map((item) => (
+                      <SidebarMenuItem key={item.value}>
+                        <SidebarMenuButton 
+                          className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale h-8 px-3 ml-2`}
+                          onClick={() => handleNavigation(item.value)}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span className="animate-fade-in text-sm">{item.title}</span>}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              )}
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
     </Sidebar>
   );
