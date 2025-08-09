@@ -124,8 +124,8 @@ export function AppSidebar() {
     const currentActive = getActiveValue();
     const isActive = currentActive === value;
     return isActive 
-      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary mr-8" 
-      : "text-muted-foreground hover:text-foreground hover:bg-muted/50 mr-8";
+      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary mr-12" 
+      : "text-muted-foreground hover:text-foreground hover:bg-muted/50 mr-12";
   };
 
   return (
