@@ -130,7 +130,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={`transition-all duration-300 ${collapsed ? "w-14" : "w-60"} bg-background border-r border-border`}>
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-background pr-12">
         {/* Logo Section */}
         <div className="px-4 py-6 border-b border-border">
           {!collapsed && (
