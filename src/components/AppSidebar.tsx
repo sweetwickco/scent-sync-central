@@ -153,7 +153,7 @@ export function AppSidebar() {
                 {!collapsed && <span>{category.label}</span>}
                 {!collapsed && (
                   <ChevronRight 
-                    className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+                    className={`h-3 w-3 transition-transform duration-200 -mr-10 ${isOpen ? 'rotate-90' : ''}`}
                   />
                 )}
               </SidebarGroupLabel>
