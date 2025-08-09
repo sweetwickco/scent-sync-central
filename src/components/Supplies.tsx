@@ -564,14 +564,19 @@ export const Supplies = () => {
                         )}
                       </div>
                       
-                      {supply.vendor && supply.price && (
+                      {(supply.vendor || supply.price || supply.link) && (
                         <Separator className="my-3" />
                       )}
                       
-                      {supply.vendor && supply.price && (
+                      {supply.link && (
                         <div className="flex justify-between items-center text-xs text-muted-foreground">
-                          <span>Quick reorder info available</span>
-                          <Button variant="outline" size="sm">
+                          <span>Quick reorder available</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(supply.link, '_blank')}
+                            className="h-7 px-2 text-xs"
+                          >
                             Reorder
                           </Button>
                         </div>
