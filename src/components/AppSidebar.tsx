@@ -7,7 +7,12 @@ import {
   Wrench, 
   Box, 
   Cog,
-  FileText 
+  FileText,
+  BarChart3,
+  ShoppingBag,
+  Users,
+  Zap,
+  Megaphone
 } from "lucide-react";
 import { NavLink, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 
@@ -32,6 +37,11 @@ const navigationItems = [
   { title: "Supplies", value: "supplies", icon: Wrench },
   { title: "Products", value: "products", icon: Box },
   { title: "Production", value: "production", icon: Cog },
+  { title: "Performance", value: "performance", icon: BarChart3 },
+  { title: "Orders", value: "orders", icon: ShoppingBag },
+  { title: "Customers", value: "customers", icon: Users },
+  { title: "Automations", value: "automations", icon: Zap },
+  { title: "Campaigns", value: "campaigns", icon: Megaphone },
   { title: "Docs", value: "docs", icon: FileText },
 ];
 

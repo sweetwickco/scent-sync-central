@@ -12,6 +12,11 @@ import { Planning } from "@/components/Planning";
 import { Supplies } from "@/components/Supplies";
 import { Products } from "@/components/Products";
 import { Production } from "@/components/Production";
+import Performance from "@/pages/Performance";
+import Orders from "@/pages/Orders";
+import Customers from "@/pages/Customers";
+import Automations from "@/pages/Automations";
+import Campaigns from "@/pages/Campaigns";
 import Docs from "@/pages/Docs";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +65,16 @@ const Index = () => {
         return <Products />;
       case 'production':
         return <Production />;
+      case 'performance':
+        return <Performance />;
+      case 'orders':
+        return <Orders />;
+      case 'customers':
+        return <Customers />;
+      case 'automations':
+        return <Automations />;
+      case 'campaigns':
+        return <Campaigns />;
       case 'docs':
         return <Docs />;
       default:
