@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Package, Store, DollarSign, Edit2, Trash2 } from "lucide-react";
+import { Plus, Package, Store, DollarSign, Edit2, Trash2, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +27,7 @@ interface Supply {
   vendor?: string;
   price?: number;
   unit: string;
+  unit_type?: string;
   link?: string;
   created_at: string;
 }
@@ -51,6 +53,7 @@ export const Supplies = () => {
     vendor: '',
     price: '',
     unit: '',
+    unit_type: '',
     link: '',
     category_id: ''
   });
@@ -117,7 +120,7 @@ export const Supplies = () => {
   };
 
   const handleCreateSupply = async () => {
-    if (!supplyForm.name.trim() || !supplyForm.unit.trim() || !supplyForm.category_id) return;
+    if (!supplyForm.name.trim() || !supplyForm.unit.trim() || !supplyForm.category_id || !supplyForm.unit_type) return;
 
     const { error } = await supabase
       .from('supplies')
@@ -126,6 +129,7 @@ export const Supplies = () => {
         vendor: supplyForm.vendor.trim() || null,
         price: supplyForm.price ? parseFloat(supplyForm.price) : null,
         unit: supplyForm.unit.trim(),
+        unit_type: supplyForm.unit_type,
         link: supplyForm.link.trim() || null,
         category_id: supplyForm.category_id,
         user_id: user?.id!
@@ -155,6 +159,7 @@ export const Supplies = () => {
       vendor: supply.vendor || '',
       price: supply.price?.toString() || '',
       unit: supply.unit,
+      unit_type: supply.unit_type || '',
       link: supply.link || '',
       category_id: supply.category_id
     });
@@ -162,7 +167,7 @@ export const Supplies = () => {
   };
 
   const handleUpdateSupply = async () => {
-    if (!editingSupply || !supplyForm.name.trim() || !supplyForm.unit.trim()) return;
+    if (!editingSupply || !supplyForm.name.trim() || !supplyForm.unit.trim() || !supplyForm.unit_type) return;
 
     const { error } = await supabase
       .from('supplies')
@@ -171,6 +176,7 @@ export const Supplies = () => {
         vendor: supplyForm.vendor.trim() || null,
         price: supplyForm.price ? parseFloat(supplyForm.price) : null,
         unit: supplyForm.unit.trim(),
+        unit_type: supplyForm.unit_type,
         link: supplyForm.link.trim() || null,
         category_id: supplyForm.category_id
       })
@@ -221,6 +227,7 @@ export const Supplies = () => {
       vendor: '',
       price: '',
       unit: '',
+      unit_type: '',
       link: '',
       category_id: ''
     });
@@ -359,25 +366,57 @@ export const Supplies = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="supply-unit">Unit Size</Label>
-                    <Input
-                      id="supply-unit"
-                      value={supplyForm.unit}
-                      onChange={(e) => setSupplyForm(prev => ({ ...prev, unit: e.target.value }))}
-                      placeholder="e.g., lbs, oz, each"
-                    />
+                    <Label htmlFor="supply-unit-type">Unit Type</Label>
+                    <Select value={supplyForm.unit_type} onValueChange={(value) => setSupplyForm(prev => ({ ...prev, unit_type: value }))}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select unit type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-input z-50">
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Volume</div>
+                        <SelectItem value="ml">ml (milliliters)</SelectItem>
+                        <SelectItem value="l">l (liters)</SelectItem>
+                        <SelectItem value="fl oz">fl oz (fluid ounces)</SelectItem>
+                        <SelectItem value="cups">cups</SelectItem>
+                        <SelectItem value="pints">pints</SelectItem>
+                        <SelectItem value="quarts">quarts</SelectItem>
+                        <SelectItem value="gallons">gallons</SelectItem>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Weight</div>
+                        <SelectItem value="g">g (grams)</SelectItem>
+                        <SelectItem value="kg">kg (kilograms)</SelectItem>
+                        <SelectItem value="oz">oz (ounces)</SelectItem>
+                        <SelectItem value="lbs">lbs (pounds)</SelectItem>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Other</div>
+                        <SelectItem value="each">each</SelectItem>
+                        <SelectItem value="pieces">pieces</SelectItem>
+                        <SelectItem value="sets">sets</SelectItem>
+                        <SelectItem value="rolls">rolls</SelectItem>
+                        <SelectItem value="sheets">sheets</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
+                    <Label htmlFor="supply-unit">Units</Label>
                     <Input
-                      id="supply-price"
+                      id="supply-unit"
                       type="number"
                       step="0.01"
-                      value={supplyForm.price}
-                      onChange={(e) => setSupplyForm(prev => ({ ...prev, price: e.target.value }))}
-                      placeholder="0.00"
+                      value={supplyForm.unit}
+                      onChange={(e) => setSupplyForm(prev => ({ ...prev, unit: e.target.value }))}
+                      placeholder="e.g., 5, 10.5"
                     />
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
+                  <Input
+                    id="supply-price"
+                    type="number"
+                    step="0.01"
+                    value={supplyForm.price}
+                    onChange={(e) => setSupplyForm(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="0.00"
+                  />
                 </div>
                 
                 <div>
@@ -509,18 +548,18 @@ export const Supplies = () => {
                           </div>
                         )}
                         
+                        {!supply.price && (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
+                          </div>
+                        )}
+                        
                         {supply.price && (
                           <div className="flex items-center gap-2">
                             <DollarSign className="h-3 w-3 text-muted-foreground" />
                             <span className="text-muted-foreground">Price:</span>
                             <span>${supply.price.toFixed(2)}</span>
-                            <Badge variant="outline">{supply.unit}</Badge>
-                          </div>
-                        )}
-                        
-                        {!supply.price && (
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{supply.unit}</Badge>
+                            <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
                           </div>
                         )}
                       </div>
