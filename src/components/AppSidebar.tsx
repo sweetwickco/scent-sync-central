@@ -141,7 +141,7 @@ export function AppSidebar() {
         </div>
         
         {/* Navigation Section */}
-        <div className="space-y-1 pt-4">
+        <div className="space-y-1 pt-4 pr-2">
         {navigationCategories.map((category) => {
           const isOpen = openCategory === category.label;
           return (
@@ -158,7 +158,7 @@ export function AppSidebar() {
                 )}
               </SidebarGroupLabel>
               {isOpen && (
-                <SidebarGroupContent className="space-y-0">
+                <SidebarGroupContent className="space-y-0 pr-2">
                   <SidebarMenu className="space-y-0">
                     {category.items.map((item) => (
                       <SidebarMenuItem key={item.value}>
