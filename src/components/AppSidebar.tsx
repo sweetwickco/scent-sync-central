@@ -28,21 +28,46 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navigationItems = [
-  { title: "Inventory", value: "inventory", icon: Package },
-  { title: "Listings", value: "listings", icon: ShoppingCart },
-  { title: "Optimizer", value: "listings-optimizer", icon: TrendingUp },
-  { title: "Ideas", value: "design-ideas", icon: Lightbulb },
-  { title: "Planning", value: "planning", icon: Calendar },
-  { title: "Supplies", value: "supplies", icon: Wrench },
-  { title: "Products", value: "products", icon: Box },
-  { title: "Production", value: "production", icon: Cog },
-  { title: "Performance", value: "performance", icon: BarChart3 },
-  { title: "Orders", value: "orders", icon: ShoppingBag },
-  { title: "Customers", value: "customers", icon: Users },
-  { title: "Automations", value: "automations", icon: Zap },
-  { title: "Campaigns", value: "campaigns", icon: Megaphone },
-  { title: "Docs", value: "docs", icon: FileText },
+const navigationCategories = [
+  {
+    label: "Sell",
+    items: [
+      { title: "Inventory", value: "inventory", icon: Package },
+      { title: "Listings", value: "listings", icon: ShoppingCart },
+      { title: "Orders", value: "orders", icon: ShoppingBag },
+    ]
+  },
+  {
+    label: "Make",
+    items: [
+      { title: "Production", value: "production", icon: Cog },
+      { title: "Supplies", value: "supplies", icon: Wrench },
+      { title: "Products", value: "products", icon: Box },
+    ]
+  },
+  {
+    label: "Grow",
+    items: [
+      { title: "Ideas", value: "design-ideas", icon: Lightbulb },
+      { title: "Planning", value: "planning", icon: Calendar },
+      { title: "Campaigns", value: "campaigns", icon: Megaphone },
+      { title: "Automations", value: "automations", icon: Zap },
+      { title: "Customers", value: "customers", icon: Users },
+    ]
+  },
+  {
+    label: "Track",
+    items: [
+      { title: "Performance", value: "performance", icon: BarChart3 },
+      { title: "Optimizer", value: "listings-optimizer", icon: TrendingUp },
+    ]
+  },
+  {
+    label: "Resources",
+    items: [
+      { title: "Docs", value: "docs", icon: FileText },
+    ]
+  }
 ];
 
 export function AppSidebar() {
@@ -82,24 +107,26 @@ export function AppSidebar() {
   return (
     <Sidebar className={`transition-all duration-300 ${collapsed ? "w-14" : "w-60"} bg-background border-r border-border`}>
       <SidebarContent className="bg-background">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-foreground/70">Business Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.value}>
-                  <SidebarMenuButton 
-                    className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale`}
-                    onClick={() => handleNavigation(item.value)}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {!collapsed && <span className="animate-fade-in">{item.title}</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navigationCategories.map((category) => (
+          <SidebarGroup key={category.label}>
+            <SidebarGroupLabel className="text-foreground/70">{category.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {category.items.map((item) => (
+                  <SidebarMenuItem key={item.value}>
+                    <SidebarMenuButton 
+                      className={`${getNavClassName(item.value)} transition-all duration-200 hover-scale`}
+                      onClick={() => handleNavigation(item.value)}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span className="animate-fade-in">{item.title}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );
