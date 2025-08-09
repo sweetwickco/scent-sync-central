@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Package, Store, DollarSign, Edit2, Trash2, ChevronDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,7 @@ export const Supplies = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [editingSupply, setEditingSupply] = useState<Supply | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<SupplyCategory | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   // Form state
   const [categoryForm, setCategoryForm] = useState({ name: '' });
@@ -274,6 +276,18 @@ export const Supplies = () => {
     }
   };
 
+  const toggleCategoryCollapse = (categoryId: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -449,145 +463,162 @@ export const Supplies = () => {
       </div>
 
       <div className="grid gap-6">
-        {categories.map((category) => (
-          <Card key={category.id}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    {category.name}
-                  </CardTitle>
-                  <CardDescription>
-                    {category.supplies.length} supplies in this category
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => openSupplyDialog(category.id)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Supply
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
+        {categories.map((category) => {
+          const isCollapsed = collapsedCategories.has(category.id);
+          return (
+            <Card key={category.id}>
+              <Collapsible>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CollapsibleTrigger 
+                      className="flex items-center gap-2 flex-1 text-left"
+                      onClick={() => toggleCategoryCollapse(category.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        <div>
+                          <CardTitle className="text-left">{category.name}</CardTitle>
+                          <CardDescription className="text-left">
+                            {category.supplies.length} supplies in this category
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <ChevronDown 
+                        className={`h-4 w-4 ml-auto transition-transform duration-200 ${
+                          isCollapsed ? '-rotate-90' : 'rotate-0'
+                        }`}
+                      />
+                    </CollapsibleTrigger>
+                    <div className="flex gap-2 ml-4">
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => setCategoryToDelete(category)}
+                        onClick={() => openSupplyDialog(category.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Supply
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete "{category.name}"? This action cannot be undone.
-                          {category.supplies.length > 0 && (
-                            <span className="block mt-2 text-destructive font-medium">
-                              This category contains {category.supplies.length} supplies. Please delete all supplies first.
-                            </span>
-                          )}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => handleDeleteCategory(category)}
-                          disabled={category.supplies.length > 0}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {category.supplies.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No supplies in this category yet.</p>
-                  <p className="text-sm">Click "Add Supply" to get started.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {category.supplies.map((supply) => (
-                    <div key={supply.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold">{supply.name}</h4>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditSupply(supply)}
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSupply(supply)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm">
-                        {supply.vendor && (
-                          <div className="flex items-center gap-2">
-                            <Store className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-muted-foreground">Vendor:</span>
-                            <span>{supply.vendor}</span>
-                          </div>
-                        )}
-                        
-                        {!supply.price && (
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
-                          </div>
-                        )}
-                        
-                        {supply.price && (
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-muted-foreground">Price:</span>
-                            <span>${supply.price.toFixed(2)}</span>
-                            <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {(supply.vendor || supply.price || supply.link) && (
-                        <Separator className="my-3" />
-                      )}
-                      
-                      {supply.link && (
-                        <div className="flex justify-between items-center text-xs text-muted-foreground">
-                          <span>Quick reorder available</span>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => window.open(supply.link, '_blank')}
-                            className="h-7 px-2 text-xs"
+                            onClick={() => setCategoryToDelete(category)}
                           >
-                            Reorder
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>
-                      )}
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{category.name}"? This action cannot be undone.
+                              {category.supplies.length > 0 && (
+                                <span className="block mt-2 text-destructive font-medium">
+                                  This category contains {category.supplies.length} supplies. Please delete all supplies first.
+                                </span>
+                              )}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteCategory(category)}
+                              disabled={category.supplies.length > 0}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                  </div>
+                </CardHeader>
+                <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <CardContent>
+                    {category.supplies.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No supplies in this category yet.</p>
+                        <p className="text-sm">Click "Add Supply" to get started.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {category.supplies.map((supply) => (
+                          <div key={supply.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold">{supply.name}</h4>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditSupply(supply)}
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteSupply(supply)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              {supply.vendor && (
+                                <div className="flex items-center gap-2">
+                                  <Store className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Vendor:</span>
+                                  <span>{supply.vendor}</span>
+                                </div>
+                              )}
+                              
+                              {!supply.price && (
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
+                                </div>
+                              )}
+                              
+                              {supply.price && (
+                                <div className="flex items-center gap-2">
+                                  <DollarSign className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Price:</span>
+                                  <span>${supply.price.toFixed(2)}</span>
+                                  <Badge variant="outline">{supply.unit} {supply.unit_type}</Badge>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {(supply.vendor || supply.price || supply.link) && (
+                              <Separator className="my-3" />
+                            )}
+                            
+                            {supply.link && (
+                              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                <span>Quick reorder available</span>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => window.open(supply.link, '_blank')}
+                                  className="h-7 px-2 text-xs"
+                                >
+                                  Reorder
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          );
+        })}
         
         {categories.length === 0 && (
           <Card>
