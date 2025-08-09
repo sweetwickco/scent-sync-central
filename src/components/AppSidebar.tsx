@@ -79,7 +79,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = searchParams.get('tab') || 'inventory';
-  const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const handleNavigation = (value: string) => {
     if (value === 'docs') {
@@ -109,16 +109,26 @@ export function AppSidebar() {
   };
 
   // Initialize open category based on active tab
-  useEffect(() => {
-    const activeCategoryLabel = getActiveCategoryLabel();
-    if (activeCategoryLabel && openCategory === null) {
-      setOpenCategory(activeCategoryLabel);
-    }
-  }, [activeTab, location.pathname]);
+   useEffect(() => {
+     const activeCategoryLabel = getActiveCategoryLabel();
+     if (activeCategoryLabel) {
+       setOpenCategories((prev) => {
+         if (prev.has(activeCategoryLabel)) return prev;
+         const next = new Set(prev);
+         next.add(activeCategoryLabel);
+         return next;
+       });
+     }
+   }, [activeTab, location.pathname]);
 
-  const handleCategoryClick = (categoryLabel: string) => {
-    setOpenCategory(openCategory === categoryLabel ? null : categoryLabel);
-  };
+   const handleCategoryClick = (categoryLabel: string) => {
+     setOpenCategories((prev) => {
+       const next = new Set(prev);
+       if (next.has(categoryLabel)) next.delete(categoryLabel);
+       else next.add(categoryLabel);
+       return next;
+     });
+   };
 
   const getNavClassName = (value: string) => {
     const currentActive = getActiveValue();
@@ -143,7 +153,7 @@ export function AppSidebar() {
         {/* Navigation Section */}
         <div className="space-y-1 pt-4 pr-2">
         {navigationCategories.map((category) => {
-          const isOpen = openCategory === category.label;
+          const isOpen = openCategories.has(category.label);
           return (
             <SidebarGroup key={category.label} className="py-1">
               <SidebarGroupLabel 
@@ -153,7 +163,7 @@ export function AppSidebar() {
                 {!collapsed && <span>{category.label}</span>}
                 {!collapsed && (
                   <ChevronRight 
-                    className={`h-3 w-3 transition-transform duration-200 -mr-10 ${isOpen ? 'rotate-90' : ''}`}
+                    className={`h-3 w-3 transition-transform duration-200 -mr-12 ${isOpen ? 'rotate-90' : ''}`}
                   />
                 )}
               </SidebarGroupLabel>
