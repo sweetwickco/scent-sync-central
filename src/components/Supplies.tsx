@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Package, Store, DollarSign, Edit2, Trash2 } from "lucide-react";
@@ -40,6 +41,7 @@ export const Supplies = () => {
   const [isSupplyDialogOpen, setIsSupplyDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [editingSupply, setEditingSupply] = useState<Supply | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<SupplyCategory | null>(null);
 
   // Form state
   const [categoryForm, setCategoryForm] = useState({ name: '' });
@@ -227,6 +229,38 @@ export const Supplies = () => {
     setIsSupplyDialogOpen(true);
   };
 
+  const handleDeleteCategory = async (category: SupplyCategory) => {
+    // First check if category has supplies
+    if (categories.find(c => c.id === category.id)?.supplies.length! > 0) {
+      toast({
+        title: "Cannot delete category",
+        description: "Please delete all supplies in this category first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('supply_categories')
+      .delete()
+      .eq('id', category.id);
+
+    if (error) {
+      toast({
+        title: "Error deleting category",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Category deleted",
+        description: `${category.name} has been removed.`,
+      });
+      setCategoryToDelete(null);
+      fetchCategoriesWithSupplies();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -373,14 +407,50 @@ export const Supplies = () => {
                     {category.supplies.length} supplies in this category
                   </CardDescription>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => openSupplyDialog(category.id)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Supply
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => openSupplyDialog(category.id)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Supply
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setCategoryToDelete(category)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{category.name}"? This action cannot be undone.
+                          {category.supplies.length > 0 && (
+                            <span className="block mt-2 text-destructive font-medium">
+                              This category contains {category.supplies.length} supplies. Please delete all supplies first.
+                            </span>
+                          )}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleDeleteCategory(category)}
+                          disabled={category.supplies.length > 0}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
