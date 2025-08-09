@@ -130,7 +130,18 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={`transition-all duration-300 ${collapsed ? "w-14" : "w-60"} bg-background border-r border-border`}>
-      <SidebarContent className="bg-background space-y-1">
+      <SidebarContent className="bg-background">
+        {/* Logo Section */}
+        <div className="px-4 py-6 border-b border-border">
+          {!collapsed && (
+            <h1 className="font-playfair text-xl font-bold tracking-wide text-foreground uppercase">
+              SWEET WICK
+            </h1>
+          )}
+        </div>
+        
+        {/* Navigation Section */}
+        <div className="space-y-1 pt-4">
         {navigationCategories.map((category) => {
           const isOpen = openCategory === category.label;
           return (
@@ -166,6 +177,7 @@ export function AppSidebar() {
             </SidebarGroup>
           );
         })}
+        </div>
       </SidebarContent>
     </Sidebar>
   );
