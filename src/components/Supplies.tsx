@@ -26,6 +26,7 @@ interface Supply {
   vendor?: string;
   price?: number;
   unit: string;
+  link?: string;
   created_at: string;
 }
 
@@ -50,6 +51,7 @@ export const Supplies = () => {
     vendor: '',
     price: '',
     unit: '',
+    link: '',
     category_id: ''
   });
 
@@ -124,6 +126,7 @@ export const Supplies = () => {
         vendor: supplyForm.vendor.trim() || null,
         price: supplyForm.price ? parseFloat(supplyForm.price) : null,
         unit: supplyForm.unit.trim(),
+        link: supplyForm.link.trim() || null,
         category_id: supplyForm.category_id,
         user_id: user?.id!
       });
@@ -152,6 +155,7 @@ export const Supplies = () => {
       vendor: supply.vendor || '',
       price: supply.price?.toString() || '',
       unit: supply.unit,
+      link: supply.link || '',
       category_id: supply.category_id
     });
     setIsSupplyDialogOpen(true);
@@ -167,6 +171,7 @@ export const Supplies = () => {
         vendor: supplyForm.vendor.trim() || null,
         price: supplyForm.price ? parseFloat(supplyForm.price) : null,
         unit: supplyForm.unit.trim(),
+        link: supplyForm.link.trim() || null,
         category_id: supplyForm.category_id
       })
       .eq('id', editingSupply.id);
@@ -216,6 +221,7 @@ export const Supplies = () => {
       vendor: '',
       price: '',
       unit: '',
+      link: '',
       category_id: ''
     });
   };
@@ -352,16 +358,27 @@ export const Supplies = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
+                    <Label htmlFor="supply-link">Link (Optional)</Label>
                     <Input
-                      id="supply-price"
-                      type="number"
-                      step="0.01"
-                      value={supplyForm.price}
-                      onChange={(e) => setSupplyForm(prev => ({ ...prev, price: e.target.value }))}
-                      placeholder="0.00"
+                      id="supply-link"
+                      type="url"
+                      value={supplyForm.link}
+                      onChange={(e) => setSupplyForm(prev => ({ ...prev, link: e.target.value }))}
+                      placeholder="https://example.com/product"
                     />
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="supply-price">Price per Unit (Optional)</Label>
+                  <Input
+                    id="supply-price"
+                    type="number"
+                    step="0.01"
+                    value={supplyForm.price}
+                    onChange={(e) => setSupplyForm(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="0.00"
+                  />
                 </div>
                 
                 <div>
